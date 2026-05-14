@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Lock, Pencil, FileText, Copy, Eye, Zap, AlertCircle, LoaderCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAlgorithm } from '../context/AlgorithmContext';
 import { decryptChaCha20, encryptChaCha20 } from '../utils/chacha20';
 import { decryptDES, encryptDES } from '../utils/des';
@@ -15,7 +15,18 @@ import {
   validateDESEncryptInput,
 } from '../utils/validation';
 
+type UjiCobaRouteState = {
+  mode?: 'encrypt' | 'decrypt';
+  algorithm?: 'DES' | 'ChaCha20';
+  input?: string;
+  key?: string;
+  nonce?: string;
+  counter?: string;
+};
+
 export function EnkripsiPage() {
+  const location = useLocation();
+  const routeState = (location.state as UjiCobaRouteState | null) ?? null;
   const {
     algorithm,
     setAlgorithm,
@@ -28,13 +39,43 @@ export function EnkripsiPage() {
     counter,
     setCounter,
   } = useAlgorithm();
-  const [mode, setMode] = useState<'encrypt' | 'decrypt'>('encrypt');
+  const [mode, setMode] = useState<'encrypt' | 'decrypt'>(routeState?.mode ?? 'encrypt');
   const [result, setResult] = useState('');
   const [inputLength, setInputLength] = useState(0);
   const [outputLength, setOutputLength] = useState(0);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!routeState) {
+      return;
+    }
+
+    if (routeState.mode) {
+      setMode(routeState.mode);
+    }
+    if (routeState.algorithm) {
+      setAlgorithm(routeState.algorithm);
+    }
+    if (routeState.input !== undefined) {
+      setPlaintext(routeState.input);
+    }
+    if (routeState.key !== undefined) {
+      setKey(routeState.key);
+    }
+    if (routeState.nonce !== undefined) {
+      setNonce(routeState.nonce);
+    }
+    if (routeState.counter !== undefined) {
+      setCounter(routeState.counter);
+    }
+
+    setResult('');
+    setInputLength(0);
+    setOutputLength(0);
+    setError('');
+  }, [routeState, setAlgorithm, setPlaintext, setKey, setNonce, setCounter]);
 
   const normalizedInput = mode === 'decrypt' ? normalizeHexInput(plaintext) : plaintext;
   const keyLength = algorithm === 'DES' ? 8 : 32;

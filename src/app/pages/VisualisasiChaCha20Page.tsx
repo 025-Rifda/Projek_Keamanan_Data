@@ -574,7 +574,18 @@ export function VisualisasiChaCha20Page() {
 
           <div className="flex items-center gap-2 order-1 md:order-2">
             <button
-              onClick={() => navigate('/enkripsi')}
+              onClick={() =>
+                navigate('/uji-coba', {
+                  state: {
+                    mode: 'encrypt',
+                    algorithm: 'ChaCha20',
+                    input: plaintext,
+                    key,
+                    nonce,
+                    counter,
+                  },
+                })
+              }
               className="flex items-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />

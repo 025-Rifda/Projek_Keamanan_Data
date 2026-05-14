@@ -32,12 +32,7 @@ export default function App() {
         />
         <Route
           path="/enkripsi"
-          element={
-            <div className="min-h-screen bg-white">
-              <Navbar />
-              <EnkripsiPage />
-            </div>
-          }
+          element={<Navigate to="/uji-coba" replace />}
         />
         <Route
           path="/uji-coba"

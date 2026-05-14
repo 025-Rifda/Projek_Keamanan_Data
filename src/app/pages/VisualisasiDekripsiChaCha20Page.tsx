@@ -416,10 +416,18 @@ function Step6Visual({
   details,
   ciphertextBytes,
   plaintextText,
+  ciphertext,
+  inputKey,
+  nonce,
+  counter,
 }: {
   details: ChaCha20Details;
   ciphertextBytes: number[];
   plaintextText: string;
+  ciphertext: string;
+  inputKey: string;
+  nonce: string;
+  counter: string;
 }) {
   const navigate = useNavigate();
   const plaintextBytes = details.ciphertextBytes;
@@ -499,7 +507,18 @@ function Step6Visual({
             Salin Plaintext
           </button>
           <button
-            onClick={() => navigate('/dekripsi/chacha20')}
+            onClick={() =>
+              navigate('/uji-coba', {
+                state: {
+                  mode: 'decrypt',
+                  algorithm: 'ChaCha20',
+                  input: ciphertext,
+                  key: inputKey,
+                  nonce,
+                  counter,
+                },
+              })
+            }
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
           >
             Dekripsi Lagi
@@ -640,6 +659,10 @@ export function VisualisasiDekripsiChaCha20Page() {
                 details={derived.details}
                 ciphertextBytes={derived.ciphertextBytes}
                 plaintextText={derived.plaintextText}
+                ciphertext={ciphertext}
+                inputKey={key}
+                nonce={nonce}
+                counter={counter}
               />
             )}
           </>
@@ -657,7 +680,18 @@ export function VisualisasiDekripsiChaCha20Page() {
 
           <div className="flex items-center gap-2 order-1 md:order-2">
             <button
-              onClick={() => navigate('/dekripsi/chacha20')}
+              onClick={() =>
+                navigate('/uji-coba', {
+                  state: {
+                    mode: 'decrypt',
+                    algorithm: 'ChaCha20',
+                    input: ciphertext,
+                    key,
+                    nonce,
+                    counter,
+                  },
+                })
+              }
               className="flex items-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />

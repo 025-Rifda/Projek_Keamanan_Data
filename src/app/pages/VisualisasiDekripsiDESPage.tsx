@@ -343,7 +343,7 @@ function Step5Visual({ details }: { details: DESDetails }) {
   );
 }
 
-function Step6Visual({ details }: { details: DESDetails }) {
+function Step6Visual({ details, ciphertext, inputKey }: { details: DESDetails; ciphertext: string; inputKey: string }) {
   const navigate = useNavigate();
   const chars = details.outputText.split('');
   const bytes = details.finalOutputBits.match(/.{1,8}/g) ?? [];
@@ -412,7 +412,16 @@ function Step6Visual({ details }: { details: DESDetails }) {
             Salin Plaintext
           </button>
           <button
-            onClick={() => navigate('/dekripsi/des')}
+            onClick={() =>
+              navigate('/uji-coba', {
+                state: {
+                  mode: 'decrypt',
+                  algorithm: 'DES',
+                  input: ciphertext,
+                  key: inputKey,
+                },
+              })
+            }
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
           >
             Dekripsi Lagi
@@ -532,7 +541,7 @@ export function VisualisasiDekripsiDESPage() {
             {currentStep === 2 && <Step3Visual currentRound={currentRound} setCurrentRound={setCurrentRound} details={details} />}
             {currentStep === 3 && <Step4Visual currentRound={currentRound} setCurrentRound={setCurrentRound} details={details} />}
             {currentStep === 4 && <Step5Visual details={details} />}
-            {currentStep === 5 && <Step6Visual details={details} />}
+            {currentStep === 5 && <Step6Visual details={details} ciphertext={ciphertext} inputKey={key} />}
           </>
         )}
 
@@ -548,7 +557,16 @@ export function VisualisasiDekripsiDESPage() {
 
           <div className="flex items-center gap-2 order-1 md:order-2">
             <button
-              onClick={() => navigate('/dekripsi/des')}
+              onClick={() =>
+                navigate('/uji-coba', {
+                  state: {
+                    mode: 'decrypt',
+                    algorithm: 'DES',
+                    input: ciphertext,
+                    key,
+                  },
+                })
+              }
               className="flex items-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />
