@@ -1,57 +1,62 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, Edit, Lightbulb, CircleDot, RotateCw, AlertCircle, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAlgorithm } from '../context/AlgorithmContext';
-import { getChaCha20Details, quarterRound, type ChaCha20Details } from '../utils/chacha20';
-import { parseCounter, validateChaCha20EncryptInput } from '../utils/validation';
+import { ChevronLeft, ChevronRight, Check, Edit, Lightbulb, CircleDot, RotateCw, AlertCircle, Info, Copy } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
+import {
+  getChaCha20DetailsFromBytes,
+  hexToUint8Array,
+  quarterRound,
+  type ChaCha20Details,
+} from '../utils/chacha20';
+import { normalizeHexInput, parseCounter, validateChaCha20DecryptInput } from '../utils/validation';
 
 const stepData = [
   {
     num: 1,
     title: 'Setup Matrix 4×4',
-    subtitle: 'State awal diisi oleh constants, key words, counter, dan nonce dari user.',
-    analogy: 'Bayangkan 16 kotak disusun dalam grid 4×4. Isinya berasal dari bahan awal yang akan diaduk terus menerus.',
-    why: 'ChaCha20 selalu mulai dari state 512-bit yang tetap strukturnya. Yang berubah adalah key, counter, dan nonce yang dipasok user.',
-    tagColor: { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+    subtitle: 'State awal dibangun dari constants, key, counter, dan nonce yang sama dengan proses enkripsi.',
+    analogy: 'Untuk membuka pesan, mesin harus menyusun ulang papan kerja yang sama persis seperti saat membuat keystream sebelumnya.',
+    why: 'ChaCha20 tidak membalik ronde. Dekripsi dimulai dengan membangkitkan state yang identik agar keystream yang sama bisa dibuat lagi.',
+    tagColor: { bg: '#F3E8FF', border: '#C4B5FD', text: '#7C3AED' },
   },
   {
     num: 2,
     title: 'Quarter Round (ARX)',
-    subtitle: 'Empat word diproses dengan penjumlahan, rotasi, dan XOR.',
-    analogy: 'Empat word bekerja seperti empat roda gigi yang saling mendorong dan memutar satu sama lain.',
-    why: 'Quarter round adalah operasi inti ChaCha20. Dari operasi kecil inilah difusi ke seluruh state dibangun.',
+    subtitle: 'Empat word contoh diproses dengan operasi add, rotate, dan XOR seperti saat enkripsi.',
+    analogy: 'Empat roda gigi diputar dengan pola yang sama untuk menghasilkan campuran bit yang identik.',
+    why: 'Quarter round tetap menjadi inti dekripsi karena ChaCha20 membuka pesan dengan membuat ulang keystream, bukan membalik rumusnya.',
     tagColor: { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D' },
   },
   {
     num: 3,
     title: '20 Rounds Mixing',
-    subtitle: 'State diacak selama 10 double rounds: column round lalu diagonal round.',
-    analogy: 'Adonan diaduk vertikal lalu diagonal secara bergantian sampai campurannya merata.',
-    why: 'Ronde berulang dibutuhkan agar setiap bit input akhirnya memengaruhi banyak posisi lain di dalam state.',
-    tagColor: { bg: '#F3E8FF', border: '#C4B5FD', text: '#7C3AED' },
+    subtitle: 'State diacak selama 20 round untuk membentuk working state yang sama dengan proses enkripsi.',
+    analogy: 'Adonan dikocok lagi dengan resep yang sama sampai mencapai campuran yang sama persis.',
+    why: 'Keystream hanya benar jika seluruh ronde dijalankan ulang dengan key, nonce, dan counter yang sama.',
+    tagColor: { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
   },
   {
     num: 4,
     title: 'Final State Addition',
-    subtitle: 'Working state dijumlahkan kembali dengan initial state mod 2^32.',
-    analogy: 'Setelah campuran selesai, bahan akhir digabung lagi dengan bahan awal sebelum dipakai.',
-    why: 'Penjumlahan akhir mengikat hasil mixing dengan state awal sehingga keystream block menjadi lebih aman.',
+    subtitle: 'Working state ditambah ke initial state untuk menghasilkan final state ChaCha20.',
+    analogy: 'Campuran akhir tetap harus digabung dengan bahan awal sebelum siap dipakai.',
+    why: 'Final state addition adalah langkah wajib sebelum serialisasi keystream, baik pada enkripsi maupun dekripsi.',
     tagColor: { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C' },
   },
   {
     num: 5,
     title: 'Serialize to Keystream',
     subtitle: 'Final state diubah menjadi 64 byte keystream little-endian.',
-    analogy: '16 angka 32-bit dibaca menjadi deretan byte yang siap dipakai untuk XOR.',
-    why: 'Cipher stream butuh urutan byte. Karena itu final state harus diserialisasi sebelum digabung dengan plaintext.',
+    analogy: 'Setelah state selesai, angkanya dibaca menjadi deretan byte yang siap dipakai sebagai kunci aliran.',
+    why: 'Dekripsi ChaCha20 membutuhkan byte keystream yang persis sama agar XOR dengan ciphertext memulihkan plaintext.',
     tagColor: { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D' },
   },
   {
     num: 6,
-    title: 'XOR dengan Plaintext',
-    subtitle: 'Keystream block digabung dengan plaintext user untuk menghasilkan ciphertext.',
-    analogy: 'Keystream bertindak seperti lapisan kunci yang ditempelkan ke plaintext untuk mengubahnya menjadi cipher.',
-    why: 'ChaCha20 adalah stream cipher. Output akhirnya selalu terbentuk dari operasi XOR antara plaintext dan keystream.',
+    title: 'XOR Ciphertext dengan Keystream',
+    subtitle: 'Ciphertext di-XOR dengan keystream yang sama untuk mendapatkan plaintext kembali.',
+    analogy: 'Lapisan kunci yang sama ditempelkan balik ke pesan rahasia hingga tulisan aslinya muncul lagi.',
+    why: 'Karena XOR bersifat reversible, ciphertext ⊕ keystream akan selalu menghasilkan plaintext asli.',
     tagColor: { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
   },
 ];
@@ -92,7 +97,7 @@ function StateNotice({ title, text, error = false }: { title: string; text: stri
         {error ? (
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
         ) : (
-          <Info className="w-5 h-5 text-[#2563EB] flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-[#7C3AED] flex-shrink-0 mt-0.5" />
         )}
         <div>
           <div className="text-[13px] font-medium text-[#0F172A] mb-1">{title}</div>
@@ -158,6 +163,28 @@ function LegendRow() {
   );
 }
 
+function StateMatrixPreview({ words, changedIndices = [] }: { words: number[]; changedIndices?: number[] }) {
+  return (
+    <div className="grid grid-cols-4 gap-1 min-w-[280px]">
+      {words.map((word, index) => {
+        const changed = changedIndices.includes(index);
+        return (
+          <div
+            key={index}
+            className={`rounded p-1.5 md:p-2 text-center border-[0.5px] ${
+              changed ? 'bg-[#FEF3C7] border-[#FDE047]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
+            }`}
+          >
+            <div className={`text-[8px] md:text-[9px] font-mono break-all ${changed ? 'text-[#92400E] font-medium' : 'text-[#64748B]'}`}>
+              {formatWordHex(word)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Step1Visual({ details }: { details: ChaCha20Details }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -171,7 +198,7 @@ function Step1Visual({ details }: { details: ChaCha20Details }) {
         <LegendRow />
         <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5 mt-4">
           <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
-            State awal dibentuk langsung dari key, nonce, dan counter user. Cell aktif memperlihatkan word {getCellLabel(activeIndex)} bernilai
+            State dekripsi dibentuk dari key, nonce, dan counter yang sama. Word aktif {getCellLabel(activeIndex)} bernilai
             <span className="font-mono text-[#0F172A]"> {formatWordHex(details.initialState[activeIndex])}</span>.
           </p>
         </div>
@@ -198,7 +225,7 @@ function Step2Visual({ details }: { details: ChaCha20Details }) {
   return (
     <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
       <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Quarter round riil pada state[0,4,8,12]</span>
+        <span className="text-[12px] font-medium text-[#64748B]">Quarter round untuk regenerasi keystream</span>
       </div>
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
@@ -228,34 +255,6 @@ function Step2Visual({ details }: { details: ChaCha20Details }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function StateMatrixPreview({
-  words,
-  changedIndices = [],
-}: {
-  words: number[];
-  changedIndices?: number[];
-}) {
-  return (
-    <div className="grid grid-cols-4 gap-1 min-w-[280px]">
-      {words.map((word, index) => {
-        const changed = changedIndices.includes(index);
-        return (
-          <div
-            key={index}
-            className={`rounded p-1.5 md:p-2 text-center border-[0.5px] ${
-              changed ? 'bg-[#FEF3C7] border-[#FDE047]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
-            }`}
-          >
-            <div className={`text-[8px] md:text-[9px] font-mono break-all ${changed ? 'text-[#92400E] font-medium' : 'text-[#64748B]'}`}>
-              {formatWordHex(word)}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -293,8 +292,8 @@ function Step3Visual({ details }: { details: ChaCha20Details }) {
         <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
           <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
             {isColumnRound
-              ? 'Column round mengacak empat kolom state dengan quarter round yang berjalan paralel.'
-              : 'Diagonal round mengacak empat diagonal state untuk menyebarkan pengaruh bit ke posisi lain.'}
+              ? 'Column round dijalankan lagi agar pola pengacakan kolom identik dengan saat enkripsi.'
+              : 'Diagonal round melanjutkan pengacakan agar keystream yang dihasilkan tetap sama persis.'}
           </p>
         </div>
       </div>
@@ -307,8 +306,8 @@ function Step3Visual({ details }: { details: ChaCha20Details }) {
               onClick={() => setCurrentRound(index + 1)}
               className={`w-8 h-8 rounded-[6px] text-[10px] font-medium border-[0.5px] transition-colors ${
                 currentRound === index + 1
-                  ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                  : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#EFF6FF]'
+                  ? 'bg-[#7C3AED] text-white border-[#7C3AED]'
+                  : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#F3E8FF]'
               }`}
             >
               {index + 1}
@@ -355,7 +354,7 @@ function Step5Visual({ details }: { details: ChaCha20Details }) {
   return (
     <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
       <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Serialize to keystream</span>
+        <span className="text-[12px] font-medium text-[#64748B]">Serialize keystream untuk dekripsi</span>
       </div>
       <div className="p-4">
         <div className="bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] p-4 mb-4">
@@ -413,22 +412,32 @@ function Step5Visual({ details }: { details: ChaCha20Details }) {
   );
 }
 
-function Step6Visual({ details }: { details: ChaCha20Details }) {
-  const plaintextBytes = details.plaintextHex.match(/.{1,2}/g)?.map((value) => parseInt(value, 16)) ?? [];
+function Step6Visual({
+  details,
+  ciphertextBytes,
+  plaintextText,
+}: {
+  details: ChaCha20Details;
+  ciphertextBytes: number[];
+  plaintextText: string;
+}) {
+  const navigate = useNavigate();
+  const plaintextBytes = details.ciphertextBytes;
+  const chars = Array.from(plaintextText);
 
   return (
     <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
       <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">XOR plaintext dengan keystream</span>
+        <span className="text-[12px] font-medium text-[#64748B]">XOR ciphertext dengan keystream</span>
       </div>
-      <div className="p-4">
+      <div className="p-4 md:p-6">
         <div className="space-y-2 mb-4">
-          {plaintextBytes.slice(0, Math.min(8, plaintextBytes.length)).map((byte, index) => (
+          {ciphertextBytes.slice(0, Math.min(8, ciphertextBytes.length)).map((byte, index) => (
             <div key={index} className="bg-[#F8FAFC] rounded-[8px] p-3 flex items-center gap-3">
               <div className="w-8 text-[10px] text-[#64748B] font-medium">#{index}</div>
               <div className="flex-1 grid grid-cols-3 gap-2">
                 <div className="bg-white border border-[#BFDBFE] rounded px-3 py-1.5 text-center">
-                  <div className="text-[9px] text-[#64748B] mb-1">Plaintext</div>
+                  <div className="text-[9px] text-[#64748B] mb-1">Ciphertext</div>
                   <div className="text-[11px] font-mono text-[#1D4ED8]">{byte.toString(16).toUpperCase().padStart(2, '0')}</div>
                 </div>
                 <div className="bg-white border border-[#C4B5FD] rounded px-3 py-1.5 text-center">
@@ -436,46 +445,114 @@ function Step6Visual({ details }: { details: ChaCha20Details }) {
                   <div className="text-[11px] font-mono text-[#7C3AED]">{details.keystreamBytes[index].toString(16).toUpperCase().padStart(2, '0')}</div>
                 </div>
                 <div className="bg-[#DCFCE7] border border-[#16A34A] rounded px-3 py-1.5 text-center">
-                  <div className="text-[9px] text-[#64748B] mb-1">Ciphertext</div>
-                  <div className="text-[11px] font-mono text-[#15803D]">{details.ciphertextBytes[index].toString(16).toUpperCase().padStart(2, '0')}</div>
+                  <div className="text-[9px] text-[#64748B] mb-1">Plaintext</div>
+                  <div className="text-[11px] font-mono text-[#15803D]">{plaintextBytes[index].toString(16).toUpperCase().padStart(2, '0')}</div>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] p-4">
-          <div className="text-[11px] font-medium text-[#15803D] mb-2">Ciphertext final (hex)</div>
-          <div className="bg-white border border-[#16A34A] rounded-[8px] px-4 py-3 text-center">
-            <div className="text-[14px] font-mono font-medium text-[#15803D] break-all">{details.ciphertext}</div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35 }}
+          className="bg-gradient-to-br from-[#F0FDF4] to-[#F3E8FF] border-[0.5px] border-[#86EFAC] rounded-[16px] p-6 text-center mb-6"
+        >
+          <div className="text-[14px] text-[#15803D] font-medium mb-4">Plaintext berhasil dikembalikan</div>
+          <div className="flex justify-center gap-1.5 mb-4 flex-wrap">
+            {chars.map((char, index) => (
+              <div
+                key={index}
+                className="bg-[#DCFCE7] border-[0.5px] border-[#86EFAC] rounded-[8px] px-3 py-2 text-[24px] font-semibold text-[#0F172A]"
+              >
+                {char}
+              </div>
+            ))}
           </div>
-          <div className="text-[10px] text-[#64748B] mt-2 text-center">
-            Counter: {details.counter} | Nonce: {details.nonceHex}
+          <div className="text-[12px] text-[#64748B]">
+            Plaintext: <span className="font-mono text-[#0F172A]">{plaintextText}</span>
           </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
+          <div className="bg-[#EFF6FF] border-[0.5px] border-[#BFDBFE] rounded-[8px] p-3 text-center">
+            <div className="text-[11px] text-[#1D4ED8] mb-0.5">Ciphertext</div>
+            <div className="text-[18px] font-medium text-[#1D4ED8]">{ciphertextBytes.length} byte</div>
+          </div>
+          <div className="bg-[#F0FDF4] border-[0.5px] border-[#86EFAC] rounded-[8px] p-3 text-center">
+            <div className="text-[11px] text-[#15803D] mb-0.5">Plaintext</div>
+            <div className="text-[18px] font-medium text-[#15803D]">{plaintextText.length} karakter</div>
+          </div>
+          <div className="bg-[#F3E8FF] border-[0.5px] border-[#C4B5FD] rounded-[8px] p-3 text-center">
+            <div className="text-[11px] text-[#7C3AED] mb-0.5">Counter</div>
+            <div className="text-[18px] font-medium text-[#7C3AED]">{details.counter}</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <button
+            onClick={() => navigator.clipboard.writeText(plaintextText)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] text-white text-[13px] font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            Salin Plaintext
+          </button>
+          <button
+            onClick={() => navigate('/dekripsi/chacha20')}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
+          >
+            Dekripsi Lagi
+          </button>
+          <button
+            onClick={() => navigate('/beranda')}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
+          >
+            Ke Beranda
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-export function VisualisasiChaCha20Page() {
-  const { plaintext, key, nonce, counter } = useAlgorithm();
+export function VisualisasiDekripsiChaCha20Page() {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = (location.state as { ciphertext?: string; key?: string; nonce?: string; counter?: string } | null) ?? null;
 
-  const validation = useMemo(() => validateChaCha20EncryptInput(plaintext, key, nonce, counter), [plaintext, key, nonce, counter]);
+  const ciphertext = normalizeHexInput(routeState?.ciphertext ?? '');
+  const key = routeState?.key ?? '';
+  const nonce = routeState?.nonce ?? '';
+  const counter = routeState?.counter ?? '0';
+  const validation = useMemo(() => validateChaCha20DecryptInput(ciphertext, key, nonce, counter), [ciphertext, key, nonce, counter]);
   const parsedCounter = useMemo(() => parseCounter(counter), [counter]);
-  const details = useMemo(() => {
+
+  const derived = useMemo(() => {
     if (!validation.isValid || parsedCounter === null) {
       return null;
     }
 
     try {
-      return getChaCha20Details(plaintext, key, nonce, parsedCounter);
+      const keyBytes = new Uint8Array(32);
+      keyBytes.set(new TextEncoder().encode(key).slice(0, 32));
+      const nonceBytes = new Uint8Array(12);
+      nonceBytes.set(new TextEncoder().encode(nonce).slice(0, 12));
+      const ciphertextInputBytes = Array.from(hexToUint8Array(ciphertext));
+      const details = getChaCha20DetailsFromBytes(hexToUint8Array(ciphertext), keyBytes, nonceBytes, parsedCounter);
+      const plaintextBytes = details.ciphertextBytes;
+      const plaintextText = new TextDecoder().decode(new Uint8Array(plaintextBytes));
+
+      return {
+        details,
+        ciphertextBytes: ciphertextInputBytes,
+        plaintextText,
+      };
     } catch {
       return null;
     }
-  }, [validation.isValid, parsedCounter, plaintext, key, nonce]);
+  }, [validation.isValid, parsedCounter, ciphertext, key, nonce]);
 
   const step = stepData[currentStep];
 
@@ -500,7 +577,7 @@ export function VisualisasiChaCha20Page() {
               <div
                 key={index}
                 className={`flex-1 h-1 rounded-[2px] ${
-                  index < currentStep ? 'bg-[#2563EB]' : index === currentStep ? 'bg-[#93C5FD]' : 'bg-[#E2E8F0]'
+                  index < currentStep ? 'bg-[#7C3AED]' : index === currentStep ? 'bg-[#C4B5FD]' : 'bg-[#E2E8F0]'
                 }`}
               />
             ))}
@@ -520,7 +597,7 @@ export function VisualisasiChaCha20Page() {
             }}
           >
             <CircleDot className="w-3 h-3" />
-            <span className="text-[11px] font-medium">Langkah {step.num}</span>
+            <span className="text-[11px] font-medium">Dekripsi Langkah {step.num}</span>
           </div>
           <h2 className="text-[16px] font-medium text-[#0F172A] mt-2.5 mb-1.5">{step.title}</h2>
           <p className="text-[13px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
@@ -545,20 +622,26 @@ export function VisualisasiChaCha20Page() {
           </p>
         </div>
 
-        {!plaintext && !key && !nonce ? (
-          <StateNotice title="Belum ada input" text="Masukkan plaintext, key, dan nonce untuk melihat proses." />
+        {!ciphertext && !key && !nonce ? (
+          <StateNotice title="Belum ada input dekripsi" text="Masukkan ciphertext, key, nonce, dan counter untuk melihat proses dekripsi ChaCha20." />
         ) : !validation.isValid ? (
-          <StateNotice title="Input belum valid" text={validation.error ?? 'Input ChaCha20 belum memenuhi syarat.'} error />
-        ) : !details ? (
-          <StateNotice title="Perhitungan gagal dibuat" text="Terjadi masalah saat membangun visualisasi ChaCha20." error />
+          <StateNotice title="Input belum valid" text={validation.error ?? 'Input dekripsi ChaCha20 belum valid.'} error />
+        ) : !derived ? (
+          <StateNotice title="Perhitungan gagal dibuat" text="Terjadi masalah saat membangun visualisasi dekripsi ChaCha20." error />
         ) : (
           <>
-            {currentStep === 0 && <Step1Visual details={details} />}
-            {currentStep === 1 && <Step2Visual details={details} />}
-            {currentStep === 2 && <Step3Visual details={details} />}
-            {currentStep === 3 && <Step4Visual details={details} />}
-            {currentStep === 4 && <Step5Visual details={details} />}
-            {currentStep === 5 && <Step6Visual details={details} />}
+            {currentStep === 0 && <Step1Visual details={derived.details} />}
+            {currentStep === 1 && <Step2Visual details={derived.details} />}
+            {currentStep === 2 && <Step3Visual details={derived.details} />}
+            {currentStep === 3 && <Step4Visual details={derived.details} />}
+            {currentStep === 4 && <Step5Visual details={derived.details} />}
+            {currentStep === 5 && (
+              <Step6Visual
+                details={derived.details}
+                ciphertextBytes={derived.ciphertextBytes}
+                plaintextText={derived.plaintextText}
+              />
+            )}
           </>
         )}
 
@@ -574,7 +657,7 @@ export function VisualisasiChaCha20Page() {
 
           <div className="flex items-center gap-2 order-1 md:order-2">
             <button
-              onClick={() => navigate('/enkripsi')}
+              onClick={() => navigate('/dekripsi/chacha20')}
               className="flex items-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />
@@ -591,7 +674,7 @@ export function VisualisasiChaCha20Page() {
             ) : (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#2563EB] text-white text-[13px] font-medium hover:bg-[#1D4ED8] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#7C3AED] text-white text-[13px] font-medium hover:bg-[#6D28D9] transition-colors"
               >
                 Selanjutnya
                 <ChevronRight className="w-3.5 h-3.5" />

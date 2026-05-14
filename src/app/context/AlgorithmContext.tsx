@@ -11,15 +11,18 @@ interface AlgorithmContextType {
   setKey: (key: string) => void;
   nonce: string;
   setNonce: (nonce: string) => void;
+  counter: string;
+  setCounter: (counter: string) => void;
 }
 
-const AlgorithmContext = createContext<AlgorithmContextType | undefined>(undefined);
+export const AlgorithmContext = createContext<AlgorithmContextType | undefined>(undefined);
 
 export function AlgorithmProvider({ children }: { children: ReactNode }) {
   const [algorithm, setAlgorithm] = useState<Algorithm>('DES');
   const [plaintext, setPlaintext] = useState('');
   const [key, setKey] = useState('');
   const [nonce, setNonce] = useState('');
+  const [counter, setCounter] = useState('0');
 
   return (
     <AlgorithmContext.Provider
@@ -32,6 +35,8 @@ export function AlgorithmProvider({ children }: { children: ReactNode }) {
         setKey,
         nonce,
         setNonce,
+        counter,
+        setCounter,
       }}
     >
       {children}
