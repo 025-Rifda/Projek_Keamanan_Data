@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { FeistelRoundsVisualization, type FeistelRoundData } from '../components/FeistelRoundsVisualization';
 import { useAlgorithm } from '../context/AlgorithmContext';
 import { VisualisasiChaCha20Page } from './VisualisasiChaCha20Page';
 import {
@@ -1619,84 +1620,21 @@ function Step3StoryVisual({
   );
 }
 
-function Step4Visual({
-  currentRound,
-  setCurrentRound,
-  details,
-}: {
-  currentRound: number;
-  setCurrentRound: (round: number) => void;
-  details: DESDetails;
-}) {
-  const round = details.rounds[currentRound - 1];
+function Step4Visual({ details }: { details: DESDetails }) {
+  const roundsData: FeistelRoundData[] = details.rounds.map((round) => ({
+    round: round.round,
+    leftInput: round.L,
+    rightInput: round.R,
+    expansion: round.expandedR,
+    xorWithKey: round.xorWithSubkey,
+    sboxOutput: round.sBoxOutput,
+    permutationOutput: round.pOutput,
+    leftOutput: round.newL,
+    rightOutput: round.newR,
+    subkey: details.keySchedule[round.subkeyIndex - 1]?.subkey ?? '',
+  }));
 
-  return (
-    <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
-      <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Detail ronde Feistel {currentRound}</span>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-[#EFF6FF] border-[0.5px] border-[#BFDBFE] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#1D4ED8] mb-1">L{currentRound - 1}</div>
-            <div className="text-[12px] font-mono text-[#1D4ED8]">{round.L}</div>
-          </div>
-          <div className="bg-[#F0FDF4] border-[0.5px] border-[#86EFAC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#15803D] mb-1">R{currentRound - 1}</div>
-            <div className="text-[12px] font-mono text-[#15803D]">{round.R}</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#64748B] mb-1">Expansion E(R)</div>
-            <div className="text-[12px] font-mono text-[#0F172A]">{round.expandedR}</div>
-          </div>
-          <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#64748B] mb-1">XOR dengan subkey K{round.subkeyIndex}</div>
-            <div className="text-[12px] font-mono text-[#0F172A]">{round.xorWithSubkey}</div>
-          </div>
-          <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#64748B] mb-1">Output S-Box</div>
-            <div className="text-[12px] font-mono text-[#0F172A]">{round.sBoxOutput}</div>
-          </div>
-          <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#64748B] mb-1">P Permutation / F(R, K)</div>
-            <div className="text-[12px] font-mono text-[#0F172A]">{round.pOutput}</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-[#FFF7ED] border-[0.5px] border-[#FED7AA] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#C2410C] mb-1">L{currentRound}</div>
-            <div className="text-[12px] font-mono text-[#C2410C]">{round.newL}</div>
-          </div>
-          <div className="bg-[#FFFBEB] border-[0.5px] border-[#FDE68A] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#92400E] mb-1">R{currentRound}</div>
-            <div className="text-[12px] font-mono text-[#92400E]">{round.newR}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t-[0.5px] border-[#E2E8F0] px-4 py-3.5">
-        <div className="flex flex-wrap gap-1">
-          {details.rounds.map((item) => (
-            <button
-              key={item.round}
-              onClick={() => setCurrentRound(item.round)}
-              className={`w-8 h-8 rounded-[6px] text-[10px] font-medium border-[0.5px] transition-colors ${
-                item.round === currentRound
-                  ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                  : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#EFF6FF]'
-              }`}
-            >
-              {item.round}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <FeistelRoundsVisualization data={roundsData} />;
 }
 
 function AvalancheBitGrid({
@@ -1928,7 +1866,7 @@ export function VisualisasiPage() {
             {currentStep === 0 && <Step1Visual details={details} />}
             {currentStep === 1 && <Step2Visual details={details} />}
             {currentStep === 2 && <Step3StoryVisual currentRound={currentRound} setCurrentRound={setCurrentRound} details={details} />}
-            {currentStep === 3 && <Step4Visual currentRound={currentRound} setCurrentRound={setCurrentRound} details={details} />}
+            {currentStep === 3 && <Step4Visual details={details} />}
             {currentStep === 4 && <Step5Visual avalanche={avalanche} />}
             {currentStep === 5 && <Step6Visual details={details} />}
           </>
