@@ -5,11 +5,6 @@ import { motion } from 'motion/react';
 export function DekripsiSelectionPage() {
   return (
     <div className="w-full min-h-[calc(100vh-56px)] relative overflow-hidden bg-[#F8FAFC]">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30 pointer-events-none" />
-      <div className="absolute top-0 right-[10%] w-[300px] h-[300px] bg-amber-400/10 blur-[100px] rounded-full pointer-events-none" />
-
-      {/* Hero Section */}
       <section className="relative px-4 md:px-8 lg:px-16 xl:px-[160px] pt-12 md:pt-16 pb-10 md:pb-12 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -38,17 +33,15 @@ export function DekripsiSelectionPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-[13px] md:text-[15px] text-[#64748B] max-w-[480px] mx-auto px-4"
+          className="text-[13px] md:text-[15px] text-[#64748B] max-w-[540px] mx-auto px-4"
           style={{ lineHeight: 1.7 }}
         >
-          Pilih algoritma yang digunakan saat mengenkripsi untuk mendekripsi ciphertext kembali menjadi plaintext
+          Pilih algoritma yang digunakan saat mengenkripsi. Dekripsi tersedia sebagai uji input dan output tanpa visualisasi langkah internal.
         </motion.p>
       </section>
 
-      {/* Algorithm Cards */}
       <section className="relative px-4 md:px-8 lg:px-16 xl:px-[160px] pb-12 md:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 max-w-[900px] mx-auto">
-          {/* DES Card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -67,7 +60,7 @@ export function DekripsiSelectionPage() {
             <h3 className="text-[18px] font-semibold text-[#0F172A] mb-1">DES Dekripsi</h3>
             <p className="text-[12px] font-medium text-[#D97706] mb-3">Data Encryption Standard</p>
             <p className="text-[13px] text-[#64748B] mb-5" style={{ lineHeight: 1.7 }}>
-              Proses dekripsi DES membalik 16 ronde Feistel dengan urutan subkey terbalik (K16→K1)
+              Masukkan ciphertext DES dan key untuk mendapatkan plaintext secara langsung di halaman uji coba.
             </p>
 
             <div className="bg-[#FFFBEB] border-[0.5px] border-[#FDE68A] rounded-[10px] px-3 py-2.5 mb-5">
@@ -77,15 +70,15 @@ export function DekripsiSelectionPage() {
             </div>
 
             <Link
-              to="/dekripsi/des"
+              to="/uji-coba"
+              state={{ mode: 'decrypt', algorithm: 'DES' }}
               className="flex items-center justify-center gap-2 w-full h-10 rounded-[10px] bg-gradient-to-r from-[#D97706] to-[#B45309] text-white text-[13px] font-medium shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
             >
-              Mulai dekripsi DES
+              Uji dekripsi DES
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </motion.div>
 
-          {/* ChaCha20 Card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -104,7 +97,7 @@ export function DekripsiSelectionPage() {
             <h3 className="text-[18px] font-semibold text-[#0F172A] mb-1">ChaCha20 Dekripsi</h3>
             <p className="text-[12px] font-medium text-[#7C3AED] mb-3">Stream Cipher Simetris</p>
             <p className="text-[13px] text-[#64748B] mb-5" style={{ lineHeight: 1.7 }}>
-              Dekripsi ChaCha20 identik dengan enkripsi — XOR ciphertext dengan keystream yang sama
+              Masukkan ciphertext ChaCha20, key, nonce, dan counter untuk mendapatkan plaintext langsung.
             </p>
 
             <div className="bg-[#EFF6FF] border-[0.5px] border-[#BFDBFE] rounded-[10px] px-3 py-2.5 mb-5">
@@ -114,17 +107,17 @@ export function DekripsiSelectionPage() {
             </div>
 
             <Link
-              to="/dekripsi/chacha20"
+              to="/uji-coba"
+              state={{ mode: 'decrypt', algorithm: 'ChaCha20' }}
               className="flex items-center justify-center gap-2 w-full h-10 rounded-[10px] bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] text-white text-[13px] font-medium shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all"
             >
-              Mulai dekripsi ChaCha20
+              Uji dekripsi ChaCha20
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Info Section */}
       <section className="relative px-4 md:px-8 lg:px-16 xl:px-[160px] pb-12 md:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -139,7 +132,7 @@ export function DekripsiSelectionPage() {
             <div className="flex-1">
               <h3 className="text-[16px] font-semibold text-[#0F172A] mb-3">Tips Dekripsi</h3>
               <p className="text-[13px] text-[#92400E]" style={{ lineHeight: 1.7 }}>
-                Pastikan kamu menggunakan key yang sama persis dengan yang dipakai saat enkripsi. Ciphertext harus dalam format hexadecimal yang valid.
+                Pastikan key, nonce, dan counter sama seperti saat enkripsi. Ciphertext harus dalam format hexadecimal yang valid.
               </p>
             </div>
           </div>

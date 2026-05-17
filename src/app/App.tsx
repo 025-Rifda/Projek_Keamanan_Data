@@ -7,10 +7,6 @@ import { EnkripsiPage } from './pages/EnkripsiPage';
 import { VisualisasiPage } from './pages/VisualisasiPage';
 import { PengembangPage } from './pages/PengembangPage';
 import { DekripsiSelectionPage } from './pages/DekripsiSelectionPage';
-import { DekripsiDESPage } from './pages/DekripsiDESPage';
-import { DekripsiChaCha20Page } from './pages/DekripsiChaCha20Page';
-import { VisualisasiDekripsiDESPage } from './pages/VisualisasiDekripsiDESPage';
-import { VisualisasiDekripsiChaCha20Page } from './pages/VisualisasiDekripsiChaCha20Page';
 
 export default function App() {
   return (
@@ -70,42 +66,8 @@ export default function App() {
             </div>
           }
         />
-        <Route
-          path="/dekripsi/des"
-          element={
-            <div className="min-h-screen bg-white">
-              <Navbar />
-              <DekripsiDESPage />
-            </div>
-          }
-        />
-        <Route
-          path="/visualisasi-dekripsi/des"
-          element={
-            <div className="min-h-screen bg-white">
-              <Navbar />
-              <VisualisasiDekripsiDESPage />
-            </div>
-          }
-        />
-        <Route
-          path="/dekripsi/chacha20"
-          element={
-            <div className="min-h-screen bg-white">
-              <Navbar />
-              <DekripsiChaCha20Page />
-            </div>
-          }
-        />
-        <Route
-          path="/visualisasi-dekripsi/chacha20"
-          element={
-            <div className="min-h-screen bg-white">
-              <Navbar />
-              <VisualisasiDekripsiChaCha20Page />
-            </div>
-          }
-        />
+        <Route path="/dekripsi/des" element={<Navigate to="/uji-coba" replace state={{ mode: 'decrypt', algorithm: 'DES' }} />} />
+        <Route path="/dekripsi/chacha20" element={<Navigate to="/uji-coba" replace state={{ mode: 'decrypt', algorithm: 'ChaCha20' }} />} />
 
         {/* Redirect unknown routes to splash */}
         <Route path="*" element={<Navigate to="/" replace />} />

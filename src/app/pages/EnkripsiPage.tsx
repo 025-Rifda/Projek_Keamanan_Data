@@ -94,7 +94,7 @@ export function EnkripsiPage() {
       : validateChaCha20DecryptInput(plaintext, key, nonce, counter);
   }, [algorithm, mode, plaintext, key, nonce, counter]);
 
-  const canOpenVisualization = result.length > 0 && !error;
+  const canOpenVisualization = mode === 'encrypt' && result.length > 0 && !error;
 
   const resetProcessState = () => {
     setResult('');
@@ -103,9 +103,13 @@ export function EnkripsiPage() {
     setError('');
   };
 
-  const emptyStateText = algorithm === 'ChaCha20'
-    ? 'Masukkan plaintext, key, dan nonce untuk melihat proses.'
-    : 'Masukkan plaintext dan key untuk melihat proses.';
+  const emptyStateText = mode === 'decrypt'
+    ? algorithm === 'ChaCha20'
+      ? 'Masukkan ciphertext, key, nonce, dan counter untuk melakukan dekripsi.'
+      : 'Masukkan ciphertext dan key untuk melakukan dekripsi.'
+    : algorithm === 'ChaCha20'
+      ? 'Masukkan plaintext, key, dan nonce untuk melihat proses.'
+      : 'Masukkan plaintext dan key untuk melihat proses.';
 
   const handleProcess = async () => {
     if (!validation.isValid) {
@@ -169,29 +173,7 @@ export function EnkripsiPage() {
       return;
     }
 
-    if (mode === 'encrypt') {
-      navigate('/visualisasi');
-      return;
-    }
-
-    if (algorithm === 'ChaCha20') {
-      navigate('/visualisasi-dekripsi/chacha20', {
-        state: {
-          ciphertext: normalizedInput,
-          key,
-          nonce,
-          counter,
-        },
-      });
-      return;
-    }
-
-    navigate('/visualisasi-dekripsi/des', {
-      state: {
-        ciphertext: normalizedInput,
-        key,
-      },
-    });
+    navigate('/visualisasi');
   };
 
   return (
@@ -409,18 +391,20 @@ export function EnkripsiPage() {
               </div>
             </div>
 
-            <button
-              onClick={handleVisualize}
-              disabled={!canOpenVisualization}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[8px] border border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Eye className="w-4 h-4" />
-              {mode === 'decrypt' && algorithm === 'DES'
-                ? 'Lihat visualisasi dekripsi'
-                : mode === 'decrypt' && algorithm === 'ChaCha20'
-                ? 'Lihat visualisasi dekripsi ChaCha20'
-                : 'Lihat visualisasi proses'}
-            </button>
+            {mode === 'encrypt' ? (
+              <button
+                onClick={handleVisualize}
+                disabled={!canOpenVisualization}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[8px] border border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Eye className="w-4 h-4" />
+                Lihat visualisasi proses
+              </button>
+            ) : (
+              <div className="rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
+                Dekripsi ditampilkan sebagai input dan output normal tanpa visualisasi langkah internal.
+              </div>
+            )}
           </div>
         </div>
       </div>
