@@ -23,6 +23,7 @@ import { useAlgorithm } from '../context/AlgorithmContext';
 import { VisualisasiChaCha20Page } from './VisualisasiChaCha20Page';
 import {
   calculateDESAvalanche,
+  DES_FINAL_PERMUTATION_TABLE,
   DES_INITIAL_PERMUTATION_TABLE,
   formatBinaryGroups,
   getDESDetails,
@@ -1080,6 +1081,7 @@ function Step3StoryVisual({
   ];
   const pc1Selected = new Set(pc1Table);
   const pc2Selected = new Set(pc2Table);
+  const pc2OutputIndexByInput = new Map(pc2Table.map((position, index) => [position, index + 1]));
   const pc2PickedBits = pc2Table.map((position) => schedule.combined[position - 1] ?? '0').join('');
   const subkeyHexGroups = schedule.subkey.match(/.{1,2}/g) ?? [];
   const subkeyBinaryGroups = pc2PickedBits.match(/.{1,8}/g) ?? [];
@@ -1090,7 +1092,7 @@ function Step3StoryVisual({
     { title: 'Split', short: 'Split', text: '56 bit dibelah tepat di tengah: 28 bit kiri menjadi C0, 28 bit kanan menjadi D0.' },
     { title: 'Left Shift', short: 'Shift', text: 'C dan D diputar ke kiri. Rotasi ini membuat bahan subkey tiap ronde berbeda.' },
     { title: 'Merge', short: 'Merge', text: `C${currentRound} dan D${currentRound} disatukan lagi menjadi 56 bit.` },
-    { title: 'PC-2', short: 'PC-2', text: 'DES hanya menjaga bit tertentu untuk membuat key ronde. Bit lain tidak dipakai pada subkey ini.' },
+    { title: 'PC-2', short: 'PC-2', text: 'PC-2 memilih 48 bit sekaligus menyusun ulang urutannya. Nomor # pada bit menunjukkan posisi output K.' },
     { title: `K${currentRound} Generated`, short: `K${currentRound}`, text: `48 bit terpilih menjadi K${currentRound}. Subkey ini dipakai pada ronde DES ke-${currentRound}.` },
   ];
   const activeStage = stages[stageIndex];
@@ -1103,12 +1105,14 @@ function Step3StoryVisual({
     tone = 'blue',
     index,
     animated = false,
+    outputIndex,
   }: {
     bit: string;
     selected?: boolean;
     tone?: 'blue' | 'green' | 'purple' | 'slate' | 'amber';
     index?: number;
     animated?: boolean;
+    outputIndex?: number;
   }) => {
     const toneClass = {
       blue: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]',
@@ -1126,6 +1130,11 @@ function Step3StoryVisual({
         className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${selected ? toneClass : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#CBD5E1]'}`}
       >
         {bit}
+        {outputIndex !== undefined && (
+          <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] font-semibold leading-[14px] text-white ring-2 ring-white">
+            #{outputIndex}
+          </span>
+        )}
       </motion.div>
     );
   };
@@ -1139,6 +1148,7 @@ function Step3StoryVisual({
     selectedMessage,
     mutedMessage,
     animated = false,
+    outputOrderMap,
   }: {
     bits: string;
     columns?: string;
@@ -1148,18 +1158,26 @@ function Step3StoryVisual({
     selectedMessage?: string;
     mutedMessage?: string;
     animated?: boolean;
+    outputOrderMap?: Map<number, number>;
   }) => (
     <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
       {bits.split('').map((bit, index) => {
         const position = index + 1 + offset;
         const selected = selectedPositions ? selectedPositions.has(position) : true;
+        const outputIndex = outputOrderMap?.get(position);
         return (
           <div
             key={`${bit}-${index}-${position}`}
-            onMouseEnter={() => setHoverMessage(selected ? selectedMessage ?? '' : mutedMessage ?? '')}
+            onMouseEnter={() => {
+              if (outputIndex !== undefined) {
+                setHoverMessage(`Output bit ke-${outputIndex} K${currentRound} berasal dari input bit ke-${position}.`);
+                return;
+              }
+              setHoverMessage(selected ? selectedMessage ?? '' : mutedMessage ?? '');
+            }}
             onMouseLeave={() => setHoverMessage('')}
           >
-            <Bit bit={bit} selected={selected} tone={tone} index={index} animated={animated} />
+            <Bit bit={bit} selected={selected} tone={tone} index={index} animated={animated} outputIndex={outputIndex} />
           </div>
         );
       })}
@@ -1181,9 +1199,7 @@ function Step3StoryVisual({
 
   const ShiftRow = ({ label, before, after, tone }: { label: string; before: string; after: string; tone: 'purple' | 'green' }) => {
     const moved = before.slice(0, schedule.shift);
-    const shiftedBody = before.slice(schedule.shift);
-    const processBits = `${shiftedBody}${moved}`;
-    const moveLabel = `Shift Left ${schedule.shift}x`;
+    const moveLabel = `Circular Left Shift (${schedule.shift} bit)`;
     const toneText = tone === 'purple' ? 'text-[#6D28D9]' : 'text-[#15803D]';
     const toneBg = tone === 'purple' ? 'bg-[#F5F3FF] border-[#DDD6FE]' : 'bg-[#F0FDF4] border-[#BBF7D0]';
     const toneDot = tone === 'purple' ? 'bg-[#6D28D9]' : 'bg-[#16A34A]';
@@ -1194,20 +1210,20 @@ function Step3StoryVisual({
       animated = false,
     }: {
       bits: string;
-      stage: 'before' | 'process' | 'after';
+      stage: 'before' | 'after';
       animated?: boolean;
     }) => (
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
         {bits.split('').map((bit, index) => {
           const isMovedBefore = stage === 'before' && index < schedule.shift;
-          const isMovedAtBack = (stage === 'process' || stage === 'after') && index >= bits.length - schedule.shift;
+          const isMovedAtBack = stage === 'after' && index >= bits.length - schedule.shift;
           const isMoved = isMovedBefore || isMovedAtBack;
           const delay = animated ? Math.min(index * 0.012, 0.28) : 0;
 
           return (
             <motion.div
               key={`${label}-${stage}-${index}-${bit}`}
-              initial={animated ? { y: stage === 'process' ? -8 : 8, opacity: 0 } : false}
+              initial={animated ? { y: 8, opacity: 0 } : false}
               animate={animated ? { y: 0, opacity: 1 } : { opacity: 1 }}
               transition={{ duration: 0.28, delay }}
               className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
@@ -1237,52 +1253,25 @@ function Step3StoryVisual({
           </div>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-[1fr_auto_1fr_auto_1fr] xl:items-start">
+        <div className="grid gap-3 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
           <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-semibold text-[#0F172A]">1. Sebelum shift</div>
+              <div className="text-[12px] font-semibold text-[#0F172A]">Sebelum Shift</div>
               <div className="text-[10px] text-[#64748B]">28 bit</div>
             </div>
             <ShiftBitGrid bits={before} stage="before" />
           </div>
 
           <div className="flex items-center justify-center xl:pt-20">
-            <motion.div
-              animate={{ x: [-10, 10, -10] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-              className="rounded-full bg-white p-2 text-[#2563EB] ring-1 ring-[#BFDBFE]"
-            >
+            <div className="flex flex-col items-center gap-2 rounded-[12px] bg-white px-3 py-2 text-center text-[#2563EB] ring-1 ring-[#BFDBFE]">
               <ArrowRight className="h-4 w-4 rotate-90 md:rotate-0" />
-            </motion.div>
-          </div>
-
-          <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-semibold text-[#1D4ED8]">2. Proses shift</div>
-              <div className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#1D4ED8] ring-1 ring-[#BFDBFE]">
-                {moveLabel}
-              </div>
+              <span className="text-[11px] font-semibold">rotate left</span>
             </div>
-            <ShiftBitGrid bits={processBits} stage="process" animated />
-            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#1D4ED8]">
-              <span>Bit lain maju ke kiri</span>
-              <span className="font-mono font-semibold">{moved} {'->'} belakang</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center xl:pt-20">
-            <motion.div
-              animate={{ x: [-10, 10, -10] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
-              className="rounded-full bg-white p-2 text-[#2563EB] ring-1 ring-[#BFDBFE]"
-            >
-              <ArrowRight className="h-4 w-4 rotate-90 md:rotate-0" />
-            </motion.div>
           </div>
 
           <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-semibold text-[#0F172A]">3. Hasil shift</div>
+              <div className="text-[12px] font-semibold text-[#0F172A]">Sesudah Shift</div>
               <div className="text-[10px] text-[#64748B]">28 bit</div>
             </div>
             <ShiftBitGrid bits={after} stage="after" animated />
@@ -1294,6 +1283,33 @@ function Step3StoryVisual({
       </div>
     );
   };
+
+  const ShiftSchedule = () => (
+    <div className="mb-4 rounded-[14px] border border-[#E2E8F0] bg-white p-3 shadow-sm">
+      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-[12px] font-semibold text-[#0F172A]">Shift Schedule DES</div>
+        <div className="text-[11px] text-[#64748B]">
+          Round {currentRound} {'->'} Left Circular Shift {schedule.shift} bit
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-1 sm:grid-cols-8 lg:grid-cols-16">
+        {details.keySchedule.map((item) => (
+          <button
+            key={`shift-${item.round}`}
+            type="button"
+            onClick={() => setCurrentRound(item.round)}
+            className={`rounded-[8px] border px-2 py-1 text-[10px] font-semibold transition-colors ${
+              item.round === currentRound
+                ? 'border-[#2563EB] bg-[#2563EB] text-white'
+                : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] hover:bg-[#EFF6FF]'
+            }`}
+          >
+            R{item.round}={item.shift}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   const stageContent = () => {
     if (stageIndex === 0) {
@@ -1375,7 +1391,9 @@ function Step3StoryVisual({
         <StoryCard>
           <div className="mb-4">
             <div className="text-[18px] font-semibold text-[#0F172A]">C dan D diputar ke kiri</div>
-            <p className="mt-1 text-[13px] text-[#64748B]">DES rotates both halves left to create a different key every round.</p>
+            <p className="mt-1 text-[13px] text-[#64748B]">
+              Round {currentRound} memakai left circular shift sebanyak {schedule.shift} bit. Bit paling kiri pindah ke belakang, bukan dibuang.
+            </p>
           </div>
           <div className="space-y-3">
             <ShiftRow label={`C${currentRound - 1} -> C${currentRound}`} before={beforeC} after={schedule.c} tone="purple" />
@@ -1416,7 +1434,9 @@ function Step3StoryVisual({
         <StoryCard>
           <div className="mb-4">
             <div className="text-[18px] font-semibold text-[#0F172A]">PC-2 memilih bit untuk round key</div>
-            <p className="mt-1 text-[13px] text-[#64748B]">DES only keeps certain bits to build a new round key. Bit yang redup tidak masuk K{currentRound}.</p>
+            <p className="mt-1 text-[13px] text-[#64748B]">
+              PC-2 tidak hanya memilih 48 bit. Tabel PC-2 juga menentukan urutan baru: output bit ke-1 K{currentRound} berasal dari input bit ke-14, output bit ke-2 dari input bit ke-17, dan seterusnya.
+            </p>
           </div>
           <BitGrid
             bits={schedule.combined}
@@ -1425,13 +1445,36 @@ function Step3StoryVisual({
             selectedPositions={pc2Selected}
             selectedMessage="Bit ini dipilih oleh PC-2."
             mutedMessage="Bit ini tidak digunakan untuk subkey ronde ini."
+            outputOrderMap={pc2OutputIndexByInput}
             animated
           />
-          <motion.div initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.35 }} className="mt-4 flex justify-center">
-            <div className="rounded-full bg-[#EFF6FF] px-4 py-2 text-[12px] font-medium text-[#1D4ED8] ring-1 ring-[#BFDBFE]">
-              48 bit terpilih bergerak menjadi K{currentRound}
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr]">
+            <div className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+              <div className="mb-2 text-[12px] font-semibold text-[#0F172A]">Tabel PC-2 DES</div>
+              <div className="grid grid-cols-6 gap-1">
+                {pc2Table.map((position, index) => (
+                  <div
+                    key={`story-pc2-${position}-${index}`}
+                    className="relative rounded-[7px] border border-[#BFDBFE] bg-white px-1 py-2 text-center font-mono text-[11px] font-semibold text-[#1D4ED8]"
+                    title={`Output bit ke-${index + 1} mengambil input bit ke-${position}`}
+                  >
+                    {position}
+                    <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] leading-[13px] text-white ring-2 ring-[#F8FAFC]">
+                      #{index + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </motion.div>
+            <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+              <div className="mb-2 text-[12px] font-semibold text-[#1D4ED8]">Cara membaca mapping</div>
+              <div className="space-y-2 text-[12px] text-[#1D4ED8]">
+                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Output bit ke-1 K{currentRound} berasal dari input bit ke-{pc2Table[0]}.</div>
+                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Output bit ke-2 berasal dari input bit ke-{pc2Table[1]}.</div>
+                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Nomor # pada grid menunjukkan posisi bit itu di output K{currentRound}.</div>
+              </div>
+            </div>
+          </div>
         </StoryCard>
       );
     }
@@ -1549,6 +1592,8 @@ function Step3StoryVisual({
             </button>
           ))}
         </div>
+
+        <ShiftSchedule />
 
         <div className="mb-5 rounded-[18px] border border-[#E2E8F0] bg-white p-4 shadow-sm">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
@@ -1684,42 +1729,222 @@ function AvalancheBitGrid({
 }
 
 function Step5Visual({ details }: { details: DESDetails }) {
+  const [activeStage, setActiveStage] = useState(0);
+  const stages = [
+    {
+      title: 'Final Swap',
+      caption: 'R16 || L16',
+      text: 'DES menukar urutan akhir menjadi R16 dulu, lalu L16, karena setiap ronde Feistel sebelumnya sudah memakai pola L baru = R lama.',
+    },
+    {
+      title: 'Final Permutation',
+      caption: 'FP 64 posisi',
+      text: 'Final Permutation menyusun ulang 64 bit preoutput menggunakan tabel FP standar. Nilai bit tidak berubah, hanya posisinya.',
+    },
+    {
+      title: 'Ciphertext',
+      caption: 'Hex per byte',
+      text: 'Setiap 8 bit output final dibaca sebagai 1 byte, lalu ditampilkan dalam bentuk hexadecimal ciphertext.',
+    },
+  ];
+  const finalRound = details.rounds[details.rounds.length - 1];
+  const r16Bits = parseBitString(details.preOutputBits.slice(0, 32));
+  const l16Bits = parseBitString(details.preOutputBits.slice(32, 64));
+  const preOutputBits = parseBitString(details.preOutputBits);
   const finalBits = parseBitString(details.finalOutputBits);
+  const finalBytes = details.finalOutputBits.match(/.{1,8}/g) ?? [];
+  const finalHexBytes = details.finalOutput.match(/.{1,2}/g) ?? [];
+
+  const renderBitGrid = (
+    bits: string[],
+    tone: 'blue' | 'green' | 'amber' = 'blue',
+    offset = 0,
+  ) => {
+    const toneClass = {
+      blue: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]',
+      green: 'bg-[#F0FDF4] border-[#86EFAC] text-[#15803D]',
+      amber: 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]',
+    }[tone];
+
+    return (
+      <div className="grid grid-cols-8 gap-1 sm:[grid-template-columns:repeat(16,minmax(0,1fr))]">
+        {bits.map((bit, index) => (
+          <div
+            key={`${offset}-${index}`}
+            title={`Bit ${offset + index + 1}`}
+            className={`relative flex h-7 w-7 items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${toneClass}`}
+          >
+            {bit}
+            <span className="absolute bottom-0.5 right-1 text-[7px] leading-none opacity-55">{offset + index + 1}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const goPrevious = () => setActiveStage((current) => Math.max(current - 1, 0));
+  const goNext = () => setActiveStage((current) => Math.min(current + 1, stages.length - 1));
+  const active = stages[activeStage];
 
   return (
     <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
-      <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Langkah 5: Final Swap, Final Permutation, dan ciphertext</span>
+      <div className="px-4 py-4 border-b-[0.5px] border-[#E2E8F0]">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-[12px] font-medium text-[#64748B]">Langkah 5: Final Swap, Final Permutation, dan ciphertext</div>
+            <div className="mt-1 text-[16px] font-semibold text-[#0F172A]">{active.title}</div>
+          </div>
+          <div className="grid grid-cols-3 gap-1 rounded-[12px] bg-[#F1F5F9] p-1">
+            {stages.map((stage, index) => (
+              <button
+                key={stage.title}
+                type="button"
+                onClick={() => setActiveStage(index)}
+                className={`rounded-[9px] px-3 py-2 text-[11px] font-medium transition-colors ${
+                  activeStage === index ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'
+                }`}
+              >
+                {index + 1}. {stage.title}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#64748B] mb-1">Final swap (R16 || L16)</div>
-            <div className="text-[12px] font-mono text-[#0F172A] break-all">{details.preOutput}</div>
-          </div>
-          <div className="bg-[#EFF6FF] border-[0.5px] border-[#BFDBFE] rounded-[8px] px-3 py-2.5">
-            <div className="text-[11px] text-[#1D4ED8] mb-1">Final Permutation output</div>
-            <div className="text-[12px] font-mono text-[#1D4ED8] break-all">{details.finalOutput}</div>
-          </div>
-        </div>
-
-        <div className="text-[11px] font-medium text-[#64748B] mb-2">Ciphertext final (64 bit)</div>
-        <div className="flex flex-wrap gap-[3px] mb-4">
-          {finalBits.map((bit, index) => (
-            <div
-              key={index}
-              className="w-5 h-5 rounded-[3px] border-[0.5px] bg-[#DCFCE7] border-[#86EFAC] text-[#15803D] flex items-center justify-center text-[10px] font-mono font-medium"
-            >
-              {bit}
+        <motion.div
+          key={active.title}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-4"
+        >
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="inline-flex rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1 text-[11px] font-semibold text-[#1D4ED8]">
+                {active.caption}
+              </div>
+              <p className="mt-2 max-w-[660px] text-[12px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
+                {active.text}
+              </p>
             </div>
-          ))}
-        </div>
+            <div className="rounded-[10px] bg-white px-3 py-2 font-mono text-[12px] font-semibold text-[#0F172A] ring-1 ring-[#E2E8F0]">
+              {activeStage + 1}/3
+            </div>
+          </div>
 
-        <div className="bg-[#F8FAFC] rounded-[8px] px-3 py-2.5">
-          <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
-            Ciphertext akhir dalam hex adalah <span className="font-mono text-[#0F172A]">{details.finalOutput}</span>.
-            Nilai ini dihasilkan langsung dari 16 ronde, final swap, dan final permutation untuk input user saat ini.
-          </p>
+          {activeStage === 0 && (
+            <div className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
+              <div className="space-y-3">
+                <div className="rounded-[12px] border border-[#86EFAC] bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold text-[#15803D]">R16 diletakkan duluan (32 bit)</div>
+                    <div className="font-mono text-[11px] text-[#15803D]">{finalRound?.newR}</div>
+                  </div>
+                  {renderBitGrid(r16Bits, 'green', 0)}
+                </div>
+                <div className="rounded-[12px] border border-[#BFDBFE] bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-semibold text-[#1D4ED8]">L16 diletakkan setelah R16 (32 bit)</div>
+                    <div className="font-mono text-[11px] text-[#1D4ED8]">{finalRound?.newL}</div>
+                  </div>
+                  {renderBitGrid(l16Bits, 'blue', 32)}
+                </div>
+              </div>
+              <div className="rounded-[12px] border border-[#FDE68A] bg-[#FFFBEB] p-4">
+                <div className="text-[12px] font-semibold text-[#92400E]">Preoutput DES</div>
+                <div className="mt-3 rounded-[10px] bg-white px-3 py-2 font-mono text-[13px] font-semibold text-[#0F172A] ring-1 ring-[#FDE68A]">
+                  {details.preOutput}
+                </div>
+                <p className="mt-3 text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
+                  Setelah ronde ke-16, DES tidak memakai L16 || R16 untuk FP. Urutan finalnya adalah R16 || L16, lalu 64 bit ini masuk ke Final Permutation.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeStage === 1 && (
+            <div className="space-y-4">
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-[12px] border border-[#FDE68A] bg-white p-3">
+                  <div className="mb-2 text-[11px] font-semibold text-[#92400E]">Input FP: R16 || L16</div>
+                  {renderBitGrid(preOutputBits, 'amber')}
+                </div>
+                <div className="rounded-[12px] border border-[#86EFAC] bg-white p-3">
+                  <div className="mb-2 text-[11px] font-semibold text-[#15803D]">Output FP: ciphertext bits</div>
+                  {renderBitGrid(finalBits, 'green')}
+                </div>
+              </div>
+              <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <Table2 className="h-4 w-4 text-[#2563EB]" />
+                  <div className="text-[12px] font-semibold text-[#0F172A]">Tabel Final Permutation lengkap</div>
+                </div>
+                <div className="grid grid-cols-4 gap-1 sm:grid-cols-8">
+                  {DES_FINAL_PERMUTATION_TABLE.map((sourcePosition, index) => (
+                    <div key={index} className="rounded-[7px] border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-1.5 text-center">
+                      <div className="text-[8px] text-[#64748B]">out {index + 1}</div>
+                      <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{`${preOutputBits[sourcePosition - 1]} -> ${finalBits[index]}`}</div>
+                      <div className="text-[8px] text-[#64748B]">ambil in {sourcePosition}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeStage === 2 && (
+            <div className="space-y-4">
+              <div className="rounded-[14px] border border-[#86EFAC] bg-white p-4 text-center">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Ciphertext final</div>
+                <div className="mt-2 break-all font-mono text-[26px] font-semibold text-[#15803D] md:text-[34px]">{details.finalOutput}</div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                {finalBytes.map((byte, index) => (
+                  <div key={`${byte}-${index}`} className="rounded-[12px] border border-[#E2E8F0] bg-white p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-[#64748B]">Byte {index + 1}</span>
+                      <span className="rounded-[7px] bg-[#F0FDF4] px-2 py-1 font-mono text-[12px] font-semibold text-[#15803D] ring-1 ring-[#86EFAC]">
+                        {finalHexBytes[index]}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[12px] text-[#0F172A]">{byte}</div>
+                    <div className="mt-2 flex gap-1">
+                      {byte.split('').map((bit, bitIndex) => (
+                        <span
+                          key={`${index}-${bitIndex}`}
+                          className="flex h-5 w-5 items-center justify-center rounded-[5px] border border-[#86EFAC] bg-[#F0FDF4] font-mono text-[10px] font-semibold text-[#15803D]"
+                        >
+                          {bit}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={goPrevious}
+            disabled={activeStage === 0}
+            className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] font-medium text-[#0F172A] transition-colors hover:bg-[#F8FAFC] disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Sub-langkah sebelumnya
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={activeStage === stages.length - 1}
+            className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[12px] font-medium text-white transition-colors hover:bg-[#1D4ED8] disabled:opacity-40"
+          >
+            Sub-langkah berikutnya
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

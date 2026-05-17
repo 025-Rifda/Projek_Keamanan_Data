@@ -1,21 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  ArrowRight,
-  Binary,
-  ChevronLeft,
-  ChevronRight,
-  CircleHelp,
-  Lightbulb,
-  Pause,
-  Play,
-  RotateCcw,
-  Shuffle,
-  WandSparkles,
-} from 'lucide-react';
-import { motion } from 'motion/react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Progress } from './ui/progress';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight, CircleDot, Info, KeyRound, Shuffle, Table2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { DES_EXPANSION_TABLE, DES_PERMUTATION_P_TABLE, DES_S_BOXES } from '../utils/des';
 
 export interface FeistelRoundData {
   round: number;
@@ -34,448 +20,376 @@ interface FeistelRoundsVisualizationProps {
   data: FeistelRoundData[];
 }
 
-interface StepDefinition {
-  id: string;
+type RoundStepId = 'input' | 'expansion' | 'xor-key' | 'sbox' | 'permutation' | 'output';
+
+interface RoundStep {
+  id: RoundStepId;
+  tab: string;
   title: string;
-  shortTitle: string;
-  description: string;
-  valueLabel: string;
-  getValue: (round: FeistelRoundData) => string;
-  tone: 'left' | 'right' | 'function' | 'xor' | 'output';
+  size: string;
+  tone: 'blue' | 'green' | 'amber' | 'purple' | 'cyan' | 'rose';
+  info: string;
 }
 
-const palette = {
-  left: {
-    soft: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]',
-    strong: 'bg-[#2563EB] border-[#2563EB] text-white',
-    ring: 'shadow-[0_0_0_3px_rgba(191,219,254,0.85)]',
-  },
-  right: {
-    soft: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]',
-    strong: 'bg-[#16A34A] border-[#16A34A] text-white',
-    ring: 'shadow-[0_0_0_3px_rgba(187,247,208,0.9)]',
-  },
-  function: {
-    soft: 'bg-[#F5F3FF] border-[#DDD6FE] text-[#7C3AED]',
-    strong: 'bg-[#7C3AED] border-[#7C3AED] text-white',
-    ring: 'shadow-[0_0_0_3px_rgba(221,214,254,0.95)]',
-  },
-  xor: {
-    soft: 'bg-[#FFF7ED] border-[#FED7AA] text-[#C2410C]',
-    strong: 'bg-[#EA580C] border-[#EA580C] text-white',
-    ring: 'shadow-[0_0_0_3px_rgba(254,215,170,0.95)]',
-  },
-  output: {
-    soft: 'bg-[#ECFEFF] border-[#A5F3FC] text-[#0F766E]',
-    strong: 'bg-[#0891B2] border-[#0891B2] text-white',
-    ring: 'shadow-[0_0_0_3px_rgba(165,243,252,0.95)]',
-  },
-} as const;
-
-const steps: StepDefinition[] = [
+const roundSteps: RoundStep[] = [
   {
     id: 'input',
-    title: '1. Input L[i-1] dan R[i-1]',
-    shortTitle: 'Input',
-    description: 'Mulai dari dua bagian lama. Sisi kiri belum diubah, sisi kanan akan masuk ke fungsi F.',
-    valueLabel: 'Lama',
-    getValue: (round) => `L = ${round.leftInput} | R = ${round.rightInput}`,
-    tone: 'left',
+    tab: 'Input',
+    title: 'Input ronde Feistel',
+    size: 'L dan R awal',
+    tone: 'blue',
+    info: 'R masuk ke Function F sebagai bahan utama. L menunggu, lalu nanti di-XOR dengan output Function F untuk membentuk R baru.',
   },
   {
     id: 'expansion',
-    title: '2. Expansion E(R[i-1])',
-    shortTitle: 'Expansion',
-    description: 'Bagian kanan diperluas supaya bisa dicampur dengan subkey ronde ini.',
-    valueLabel: 'E(R)',
-    getValue: (round) => round.expansion,
-    tone: 'function',
+    tab: 'Expansion E',
+    title: 'Expansion E (32 -> 48 bit)',
+    size: '32 -> 48 bit',
+    tone: 'green',
+    info: 'Expansion E menggandakan beberapa bit tepi agar R 32-bit menjadi 48-bit. Ukuran ini harus sama dengan subkey ronde.',
   },
   {
     id: 'xor-key',
-    title: '3. XOR dengan K[i]',
-    shortTitle: 'XOR K',
-    description: 'Hasil expansion dicampur dengan subkey menggunakan XOR.',
-    valueLabel: 'E(R) XOR K',
-    getValue: (round) => round.xorWithKey,
-    tone: 'xor',
+    tab: 'XOR Subkey K',
+    title: 'XOR dengan subkey ronde',
+    size: '48 -> 48 bit',
+    tone: 'amber',
+    info: 'XOR memasukkan pengaruh kunci ke data. Bit output menjadi 1 jika bit ekspansi dan bit subkey berbeda.',
   },
   {
     id: 'sbox',
-    title: '4. S-Box',
-    shortTitle: 'S-Box',
-    description: 'S-Box mengubah hasil tadi menjadi bentuk baru yang lebih teracak.',
-    valueLabel: 'S-Box',
-    getValue: (round) => round.sboxOutput,
-    tone: 'function',
+    tab: 'S-Box',
+    title: 'S-Box DES (48 -> 32 bit)',
+    size: '8 blok x 6 bit',
+    tone: 'purple',
+    info: 'Setiap 6 bit masuk ke satu S-Box. Bit pertama dan terakhir memilih baris, empat bit tengah memilih kolom, lalu hasilnya menjadi 4 bit.',
   },
   {
     id: 'permutation',
-    title: '5. Permutation P',
-    shortTitle: 'Permutasi P',
-    description: 'Bit dari hasil S-Box disusun ulang. Inilah output fungsi F.',
-    valueLabel: 'F(R, K)',
-    getValue: (round) => round.permutationOutput,
-    tone: 'function',
+    tab: 'Permutasi P',
+    title: 'Permutasi P',
+    size: '32 -> 32 bit',
+    tone: 'cyan',
+    info: 'Permutation P menyebarkan output S-Box ke posisi baru agar perubahan kecil dapat memengaruhi ronde berikutnya.',
   },
   {
-    id: 'xor-left',
-    title: '6. XOR dengan L[i-1]',
-    shortTitle: 'XOR L',
-    description: 'Output fungsi F dicampur dengan sisi kiri lama untuk membentuk sisi kanan baru.',
-    valueLabel: 'R baru',
-    getValue: (round) => round.rightOutput,
-    tone: 'xor',
-  },
-  {
-    id: 'swap',
-    title: '7. Swap menjadi L[i] dan R[i]',
-    shortTitle: 'Swap',
-    description: 'Bagian kanan lama menjadi kiri baru. Hasil XOR menjadi kanan baru.',
-    valueLabel: 'Output ronde',
-    getValue: (round) => `L = ${round.leftOutput} | R = ${round.rightOutput}`,
-    tone: 'output',
+    id: 'output',
+    tab: 'Output & Swap',
+    title: 'Output ronde dan swap',
+    size: 'L baru, R baru',
+    tone: 'rose',
+    info: 'L baru adalah R lama. R baru adalah L lama XOR output Function F. Swap ini membuat dua sisi saling memengaruhi di ronde berikutnya.',
   },
 ];
 
-function formatHex(value: string): string {
-  return value.match(/.{1,4}/g)?.join(' ') ?? value;
+const toneClass = {
+  blue: {
+    active: 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]',
+    soft: 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]',
+    solid: 'bg-[#2563EB] text-white',
+  },
+  green: {
+    active: 'border-[#16A34A] bg-[#F0FDF4] text-[#15803D]',
+    soft: 'border-[#86EFAC] bg-[#F0FDF4] text-[#15803D]',
+    solid: 'bg-[#16A34A] text-white',
+  },
+  amber: {
+    active: 'border-[#F59E0B] bg-[#FFFBEB] text-[#B45309]',
+    soft: 'border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]',
+    solid: 'bg-[#F59E0B] text-white',
+  },
+  purple: {
+    active: 'border-[#7C3AED] bg-[#F5F3FF] text-[#6D28D9]',
+    soft: 'border-[#DDD6FE] bg-[#F5F3FF] text-[#6D28D9]',
+    solid: 'bg-[#7C3AED] text-white',
+  },
+  cyan: {
+    active: 'border-[#0891B2] bg-[#ECFEFF] text-[#0E7490]',
+    soft: 'border-[#A5F3FC] bg-[#ECFEFF] text-[#0E7490]',
+    solid: 'bg-[#0891B2] text-white',
+  },
+  rose: {
+    active: 'border-[#E11D48] bg-[#FFF1F2] text-[#BE123C]',
+    soft: 'border-[#FECDD3] bg-[#FFF1F2] text-[#BE123C]',
+    solid: 'bg-[#E11D48] text-white',
+  },
+} satisfies Record<RoundStep['tone'], { active: string; soft: string; solid: string }>;
+
+function hexToBits(hex: string, expectedLength: number) {
+  const clean = hex.replace(/[^0-9a-f]/gi, '');
+  const bits = clean
+    .split('')
+    .map((char) => parseInt(char, 16).toString(2).padStart(4, '0'))
+    .join('');
+
+  return bits.padStart(expectedLength, '0').slice(-expectedLength);
 }
 
-function getToneClasses(tone: StepDefinition['tone'], active = false): string {
-  const entry = palette[tone];
-  return active ? `${entry.strong} ${entry.ring}` : entry.soft;
+function binaryToHex(bits: string) {
+  return bits.match(/.{1,4}/g)?.map((chunk) => parseInt(chunk.padEnd(4, '0'), 2).toString(16).toUpperCase()).join('') ?? '';
 }
 
-function getRoundLabels(round: FeistelRoundData) {
+function pseudoSubkeyBits(round: number) {
+  let seed = (round * 0x9e3779b1) >>> 0;
+  let bits = '';
+
+  while (bits.length < 48) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    bits += seed.toString(2).padStart(32, '0');
+  }
+
+  return bits.slice(0, 48);
+}
+
+function shortBits(bits: string, count = 16) {
+  return `${bits.slice(0, count)}...`;
+}
+
+function getLabels(round: FeistelRoundData) {
   return {
-    previousLeft: `L${round.round - 1}`,
-    previousRight: `R${round.round - 1}`,
-    nextLeft: `L${round.round}`,
-    nextRight: `R${round.round}`,
+    leftIn: `L${round.round - 1}`,
+    rightIn: `R${round.round - 1}`,
+    leftOut: `L${round.round}`,
+    rightOut: `R${round.round}`,
     subkey: `K${round.round}`,
   };
 }
 
-function StepHeader() {
+function useRoundBits(round: FeistelRoundData) {
+  return useMemo(() => {
+    const leftInput = hexToBits(round.leftInput, 32);
+    const rightInput = hexToBits(round.rightInput, 32);
+    const expansion = hexToBits(round.expansion, 48);
+    const subkey = round.subkey ? hexToBits(round.subkey, 48) : pseudoSubkeyBits(round.round);
+    const xorWithKey = hexToBits(round.xorWithKey, 48);
+    const sboxOutput = hexToBits(round.sboxOutput, 32);
+    const permutationOutput = hexToBits(round.permutationOutput, 32);
+    const leftOutput = hexToBits(round.leftOutput, 32);
+    const rightOutput = hexToBits(round.rightOutput, 32);
+
+    return {
+      leftInput,
+      rightInput,
+      expansion,
+      subkey,
+      xorWithKey,
+      sboxOutput,
+      permutationOutput,
+      leftOutput,
+      rightOutput,
+      xorChanged: expansion.split('').map((bit, index) => bit !== subkey[index]),
+      outputChanged: leftInput.split('').map((bit, index) => bit !== permutationOutput[index]),
+    };
+  }, [round]);
+}
+
+function BitCell({
+  bit,
+  index,
+  active,
+  changed,
+  muted,
+  title,
+}: {
+  bit: string;
+  index: number;
+  active?: boolean;
+  changed?: boolean;
+  muted?: boolean;
+  title?: string;
+}) {
+  const stateClass = changed
+    ? 'border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_12px_rgba(245,158,11,0.22)]'
+    : active
+      ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
+      : bit === '1'
+        ? 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
+        : 'border-[#E2E8F0] bg-white text-[#94A3B8]';
+
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 md:p-6 shadow-sm">
-      <div className="inline-flex items-center gap-2 rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-3 py-1 text-[11px] font-semibold text-[#C2410C]">
-        <WandSparkles className="h-3.5 w-3.5" />
-        Langkah 4
+    <div
+      title={title ?? `Bit ${index + 1}`}
+      className={`flex h-6 w-6 items-center justify-center rounded-[6px] border font-mono text-[11px] font-semibold transition-colors ${
+        muted ? 'opacity-45' : ''
+      } ${stateClass}`}
+    >
+      {bit}
+    </div>
+  );
+}
+
+function BitGrid({
+  bits,
+  label,
+  columns = 8,
+  changedIndexes = [],
+  activeIndexes = [],
+}: {
+  bits: string;
+  label: string;
+  columns?: 6 | 8;
+  changedIndexes?: number[];
+  activeIndexes?: number[];
+}) {
+  const changedSet = new Set(changedIndexes);
+  const activeSet = new Set(activeIndexes);
+
+  return (
+    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">{label}</div>
+        <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{binaryToHex(bits)}</div>
       </div>
-      <h2 className="mt-3 text-[22px] font-semibold text-[#0F172A] md:text-[28px]">16 Ronde Feistel</h2>
-      <p className="mt-2 max-w-[760px] text-[13px] text-[#64748B] md:text-[14px]" style={{ lineHeight: 1.7 }}>
-        Pada setiap ronde, sisi kanan diproses, hasilnya di-XOR dengan sisi kiri, lalu keduanya bertukar posisi.
+      <div className={`grid gap-1 ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+        {bits.split('').map((bit, index) => (
+          <BitCell
+            key={`${label}-${index}`}
+            bit={bit}
+            index={index}
+            changed={changedSet.has(index)}
+            active={activeSet.has(index)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MappingTable({
+  table,
+  inputBits,
+  outputBits,
+  label,
+  columns,
+}: {
+  table: number[];
+  inputBits: string;
+  outputBits: string;
+  label: string;
+  columns: 6 | 8;
+}) {
+  return (
+    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#0F172A]">
+          <Table2 className="h-4 w-4 text-[#2563EB]" />
+          {label}
+        </div>
+        <div className="text-[11px] text-[#64748B]">Output mengambil posisi input</div>
+      </div>
+      <div className={`grid gap-1 ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+        {table.map((sourcePosition, index) => {
+          const bit = outputBits[index] ?? inputBits[sourcePosition - 1] ?? '0';
+          return (
+            <div key={`${label}-${index}`} className="rounded-[7px] border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-1 text-center">
+              <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{bit}</div>
+              <div className="mt-0.5 text-[8px] leading-none text-[#64748B]">{`${index + 1}<-${sourcePosition}`}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ step }: { step: RoundStep }) {
+  return (
+    <div className={`rounded-[14px] border px-4 py-3 ${toneClass[step.tone].soft}`}>
+      <div className="mb-1 flex items-center gap-2 text-[12px] font-semibold">
+        <Info className="h-4 w-4" />
+        Kenapa operasi ini dilakukan?
+      </div>
+      <p className="text-[12px]" style={{ lineHeight: 1.65 }}>
+        {step.info}
       </p>
     </div>
   );
 }
 
-function AnalogyAlert() {
-  return (
-    <div className="flex gap-3 rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-4 shadow-sm">
-      <Lightbulb className="h-5 w-5 flex-shrink-0 text-[#F59E0B]" />
-      <div>
-        <div className="text-[12px] font-semibold text-[#78350F]">Analogi sederhana</div>
-        <p className="mt-1 text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-          Bayangkan sisi kanan masuk ke mesin pengacak. Hasilnya dicampur dengan sisi kiri, lalu posisi kiri dan kanan ditukar.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function FormulaCard({ round }: { round: FeistelRoundData }) {
-  const labels = getRoundLabels(round);
-
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-        <div className="text-[12px] font-semibold text-[#0F172A]">Rumus ronde Feistel</div>
-        <div className="mt-4 space-y-3 font-mono text-[14px] md:text-[16px]">
-          <div className="rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[#1D4ED8]">
-            {labels.nextLeft} = {labels.previousRight}
-          </div>
-          <div className="rounded-[12px] border border-[#A5F3FC] bg-[#ECFEFF] px-4 py-3 text-[#0F766E] break-all">
-            {labels.nextRight} = {labels.previousLeft} XOR F({labels.previousRight}, {labels.subkey})
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-        <div className="text-[12px] font-semibold text-[#0F172A]">Ronde aktif</div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[28px] font-semibold text-[#0F172A]">{round.round}</div>
-            <div className="text-[12px] text-[#64748B]">Subkey yang dipakai: {labels.subkey}</div>
-          </div>
-          <div className="rounded-[14px] border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-2 text-right">
-            <div className="text-[10px] text-[#7C3AED]">Subkey</div>
-            <div className="max-w-[190px] break-all font-mono text-[12px] font-semibold text-[#6D28D9]">{formatHex(round.subkey)}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TechBadge({ label, help }: { label: string; help: string }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#475569]"
-        >
-          {label}
-          <CircleHelp className="h-3.5 w-3.5 text-[#94A3B8]" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent sideOffset={6} className="max-w-[220px] bg-[#0F172A] text-white">
-        {help}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function DiagramNode({
-  title,
-  value,
-  tone,
-  active,
-}: {
-  title: string;
-  value: string;
-  tone: keyof typeof palette;
-  active: boolean;
-}) {
-  return (
-    <motion.div
-      animate={{ scale: active ? 1.02 : 1, y: active ? -2 : 0 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      className={`rounded-[16px] border px-4 py-3 shadow-sm transition-all ${getToneClasses(tone, active)}`}
-    >
-      <div className="text-[11px] font-semibold opacity-85">{title}</div>
-      <div className="mt-2 break-all font-mono text-[12px] font-semibold">{formatHex(value)}</div>
-    </motion.div>
-  );
-}
-
-function FlowArrow({ label }: { label?: string }) {
-  return (
-    <div className="flex items-center justify-center gap-2 text-[#94A3B8]">
-      <ArrowRight className="h-4 w-4" />
-      {label ? <span className="text-[10px] font-medium uppercase tracking-[0.12em]">{label}</span> : null}
-    </div>
-  );
-}
-
-function FeistelDiagram({ round, activeStep }: { round: FeistelRoundData; activeStep: number }) {
-  const labels = getRoundLabels(round);
-  const highlightFunction = activeStep >= 1 && activeStep <= 4;
-  const highlightXor = activeStep === 5;
-  const highlightSwap = activeStep === 6;
-
-  return (
-    <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="text-[14px] font-semibold text-[#0F172A]">Alur satu ronde Feistel</div>
-          <p className="mt-1 text-[12px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
-            Fokusnya sederhana: R kanan diproses, hasilnya di-XOR dengan L kiri, lalu kedua sisi bertukar posisi.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <TechBadge label="Expansion" help="Expansion memperluas 32 bit menjadi 48 bit agar bisa dicampur dengan subkey." />
-          <TechBadge label="S-Box" help="S-Box mengubah pola bit agar hasil ronde tidak mudah ditebak." />
-          <TechBadge label="Permutation P" help="Permutation P menyusun ulang bit output S-Box agar pengaruhnya tersebar." />
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-            <DiagramNode title={labels.previousLeft} value={round.leftInput} tone="left" active={activeStep === 0 || activeStep === 5} />
-            <div className="hidden lg:flex justify-center text-[#94A3B8]">
-              <Binary className="h-5 w-5" />
-            </div>
-            <DiagramNode title={labels.previousRight} value={round.rightInput} tone="right" active={activeStep <= 4 || activeStep === 6} />
-          </div>
-
-          <div className="my-4 h-px bg-[#E2E8F0]" />
-
-          <div className="grid grid-cols-1 gap-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-              <DiagramNode title={`F(${labels.previousRight}, ${labels.subkey})`} value={round.permutationOutput} tone="function" active={highlightFunction} />
-              <FlowArrow label="XOR" />
-              <DiagramNode title={`${labels.nextRight}`} value={round.rightOutput} tone="output" active={highlightXor || highlightSwap} />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-              <DiagramNode title={`${labels.previousRight} menjadi ${labels.nextLeft}`} value={round.leftOutput} tone="right" active={highlightSwap} />
-              <FlowArrow label="Swap" />
-              <DiagramNode title={`${labels.nextLeft}`} value={round.leftOutput} tone="left" active={highlightSwap} />
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[16px] border border-[#DDD6FE] bg-[#FAF5FF] p-4">
-          <div className="flex items-center gap-2 text-[#6D28D9]">
-            <Shuffle className="h-4 w-4" />
-            <div className="text-[13px] font-semibold">Isi fungsi F</div>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            <DiagramNode title={`Input ${labels.previousRight}`} value={round.rightInput} tone="right" active={activeStep === 0 || activeStep === 1} />
-            <FlowArrow />
-            <DiagramNode title="Expansion E" value={round.expansion} tone="function" active={activeStep === 1} />
-            <FlowArrow />
-            <DiagramNode title={`${labels.subkey} dan XOR`} value={round.xorWithKey} tone="xor" active={activeStep === 2} />
-            <FlowArrow />
-            <DiagramNode title="S-Box" value={round.sboxOutput} tone="function" active={activeStep === 3} />
-            <FlowArrow />
-            <DiagramNode title="Permutation P" value={round.permutationOutput} tone="function" active={activeStep === 4} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StepByStepPanel({
-  round,
-  activeStep,
-  setActiveStep,
-  showExplanation,
-}: {
-  round: FeistelRoundData;
-  activeStep: number;
-  setActiveStep: (step: number) => void;
-  showExplanation: boolean;
-}) {
-  const labels = getRoundLabels(round);
-
-  return (
-    <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[14px] font-semibold text-[#0F172A]">Langkah per langkah</div>
-          <p className="mt-1 text-[12px] text-[#64748B]">Klik langkah mana pun untuk fokus ke bagian itu.</p>
-        </div>
-        <div className="rounded-full bg-[#F8FAFC] px-3 py-1 text-[11px] font-medium text-[#475569]">
-          Langkah aktif: {activeStep + 1}/7
-        </div>
-      </div>
-
-      <Accordion type="single" collapsible value={steps[activeStep]?.id} className="mt-4 space-y-3">
-        {steps.map((step, index) => {
-          const isActive = index === activeStep;
-          const stepTone = getToneClasses(step.tone, isActive);
-          const value = step.getValue(round);
-          const titleSuffix = step.id === 'input'
-            ? `(${labels.previousLeft} dan ${labels.previousRight})`
-            : step.id === 'swap'
-              ? `(${labels.nextLeft} dan ${labels.nextRight})`
-              : '';
-
-          return (
-            <AccordionItem
-              key={step.id}
-              value={step.id}
-              className={`overflow-hidden rounded-[14px] border ${isActive ? 'border-transparent' : 'border-[#E2E8F0]'}`}
-            >
-              <AccordionTrigger
-                onClick={() => setActiveStep(index)}
-                className={`px-4 py-4 no-underline hover:no-underline ${stepTone}`}
-              >
-                <div className="flex-1">
-                  <div className="text-[13px] font-semibold">
-                    {step.title} {titleSuffix}
-                  </div>
-                  <div className={`mt-1 text-[11px] ${isActive ? 'text-white/85' : 'opacity-85'}`}>
-                    {step.valueLabel}: <span className="font-mono font-semibold">{formatHex(value)}</span>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-0">
-                <div className="rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                  {showExplanation ? (
-                    <p className="text-[12px] text-[#475569]" style={{ lineHeight: 1.7 }}>
-                      {step.description}
-                    </p>
-                  ) : (
-                    <p className="text-[12px] text-[#64748B]">Penjelasan disembunyikan. Aktifkan lagi dari kontrol playback jika diperlukan.</p>
-                  )}
-                  <div className="mt-3 rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#64748B]">{step.valueLabel}</div>
-                    <div className="mt-1 break-all font-mono text-[12px] font-semibold text-[#0F172A]">{formatHex(value)}</div>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-    </div>
-  );
-}
-
-function OutputCard({ round }: { round: FeistelRoundData }) {
-  const labels = getRoundLabels(round);
-
-  return (
-    <div className="rounded-[18px] border border-[#A5F3FC] bg-[#F0FDFF] p-5 shadow-sm">
-      <div className="text-[14px] font-semibold text-[#0F172A]">Hasil ronde ini</div>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div className="rounded-[14px] border border-[#BFDBFE] bg-white px-4 py-3">
-          <div className="text-[11px] font-semibold text-[#1D4ED8]">
-            {labels.nextLeft} = {labels.previousRight}
-          </div>
-          <div className="mt-2 break-all font-mono text-[14px] font-semibold text-[#1D4ED8]">{formatHex(round.leftOutput)}</div>
-          <div className="mt-1 text-[11px] text-[#64748B]">Bagian kanan lama menjadi kiri baru.</div>
-        </div>
-
-        <div className="rounded-[14px] border border-[#A5F3FC] bg-white px-4 py-3">
-          <div className="text-[11px] font-semibold text-[#0F766E]">
-            {labels.nextRight} = {labels.previousLeft} XOR F({labels.previousRight}, {labels.subkey})
-          </div>
-          <div className="mt-2 break-all font-mono text-[14px] font-semibold text-[#0F766E]">{formatHex(round.rightOutput)}</div>
-          <div className="mt-1 text-[11px] text-[#64748B]">Output fungsi F dicampur dengan kiri lama.</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RoundNavigation({
+function RoundSelector({
   totalRounds,
   currentRound,
-  setCurrentRound,
+  onSelectRound,
 }: {
   totalRounds: number;
   currentRound: number;
-  setCurrentRound: (round: number) => void;
+  onSelectRound: (round: number) => void;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-      <div className="text-[14px] font-semibold text-[#0F172A]">Pilih ronde</div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {Array.from({ length: totalRounds }, (_, index) => {
-          const round = index + 1;
-          const active = round === currentRound;
+    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <span className="shrink-0 text-[12px] font-medium text-[#64748B]">Pilih ronde:</span>
+      {Array.from({ length: totalRounds }, (_, index) => {
+        const round = index + 1;
+        const active = round === currentRound;
+
+        return (
+          <button
+            key={round}
+            type="button"
+            onClick={() => onSelectRound(round)}
+            className={`h-8 shrink-0 rounded-[9px] border px-3 text-[12px] font-semibold transition-colors ${
+              active
+                ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-sm'
+                : 'border-[#CBD5E1] bg-white text-[#475569] hover:border-[#2563EB] hover:text-[#1D4ED8]'
+            }`}
+          >
+            R{round}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MetaBar({
+  round,
+  totalRounds,
+  bits,
+}: {
+  round: FeistelRoundData;
+  totalRounds: number;
+  bits: ReturnType<typeof useRoundBits>;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <div className="rounded-[9px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#475569]">Ronde {round.round}/{totalRounds}</div>
+      <div className="rounded-[9px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-[12px] text-[#1D4ED8]">
+        L{round.round - 1} pertama <span className="font-mono font-semibold">{shortBits(bits.leftInput, 10)}</span>
+      </div>
+      <div className="rounded-[9px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[12px] text-[#15803D]">
+        R{round.round - 1} pertama <span className="font-mono font-semibold">{shortBits(bits.rightInput, 10)}</span>
+      </div>
+      <div className="rounded-[9px] border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[12px] text-[#92400E]">
+        K{round.round} <span className="font-mono font-semibold">{shortBits(bits.subkey, 10)}</span>
+      </div>
+    </div>
+  );
+}
+
+function StepTabs({
+  activeIndex,
+  onSelect,
+}: {
+  activeIndex: number;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[12px] border border-[#CBD5E1] bg-white">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
+        {roundSteps.map((step, index) => {
+          const active = index === activeIndex;
+
           return (
             <button
-              key={round}
+              key={step.id}
               type="button"
-              onClick={() => setCurrentRound(round)}
-              className={`h-10 min-w-10 rounded-[10px] border px-3 text-[12px] font-semibold transition-colors ${
-                active
-                  ? 'border-[#2563EB] bg-[#2563EB] text-white'
-                  : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#475569] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]'
+              onClick={() => onSelect(index)}
+              className={`border-b border-r border-[#E2E8F0] px-3 py-3 text-left text-[12px] transition-colors last:border-r-0 xl:border-b-0 ${
+                active ? `${toneClass[step.tone].solid} font-semibold` : 'bg-[#F8FAFC] text-[#64748B] hover:bg-white hover:text-[#0F172A]'
               }`}
             >
-              {round}
+              <span className="mr-1 opacity-75">{index + 1}</span>
+              {step.tab}
             </button>
           );
         })}
@@ -484,123 +398,293 @@ function RoundNavigation({
   );
 }
 
-function PlaybackControls({
-  isPlaying,
-  onTogglePlay,
-  onPreviousStep,
-  onNextStep,
-  onReset,
-  showExplanation,
-  onToggleExplanation,
+function SBoxTable({
+  boxIndex,
+  chunk,
+  outputBits,
 }: {
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  onPreviousStep: () => void;
-  onNextStep: () => void;
-  onReset: () => void;
-  showExplanation: boolean;
-  onToggleExplanation: () => void;
+  boxIndex: number;
+  chunk: string;
+  outputBits: string;
 }) {
+  const row = parseInt(`${chunk[0]}${chunk[5]}`, 2);
+  const column = parseInt(chunk.slice(1, 5), 2);
+  const value = DES_S_BOXES[boxIndex][row][column];
+
   return (
-    <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-      <div className="text-[14px] font-semibold text-[#0F172A]">Kontrol pembelajaran</div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onTogglePlay}
-          className={`inline-flex items-center gap-2 rounded-[10px] px-4 py-2.5 text-[12px] font-semibold text-white ${
-            isPlaying ? 'bg-[#0F766E] hover:bg-[#0D9488]' : 'bg-[#2563EB] hover:bg-[#1D4ED8]'
-          }`}
-        >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          {isPlaying ? 'Pause otomatis' : 'Play otomatis'}
-        </button>
-
-        <button
-          type="button"
-          onClick={onPreviousStep}
-          className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 text-[12px] font-semibold text-[#0F172A] hover:bg-white"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Step sebelumnya
-        </button>
-
-        <button
-          type="button"
-          onClick={onNextStep}
-          className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 text-[12px] font-semibold text-[#0F172A] hover:bg-white"
-        >
-          Step berikutnya
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 text-[12px] font-semibold text-[#0F172A] hover:bg-white"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Reset
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleExplanation}
-          className={`inline-flex items-center gap-2 rounded-[10px] px-4 py-2.5 text-[12px] font-semibold ${
-            showExplanation
-              ? 'border border-[#DDD6FE] bg-[#F5F3FF] text-[#6D28D9]'
-              : 'border border-[#E2E8F0] bg-[#F8FAFC] text-[#475569]'
-          }`}
-        >
-          <CircleHelp className="h-4 w-4" />
-          {showExplanation ? 'Sembunyikan penjelasan' : 'Tampilkan penjelasan'}
-        </button>
+    <div className="rounded-[14px] border border-[#DDD6FE] bg-white p-3">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-[13px] font-semibold text-[#5B21B6]">S{boxIndex + 1} lookup</div>
+          <div className="mt-1 font-mono text-[11px] text-[#64748B]">
+            {`input ${chunk} -> row ${row}, column ${column}`}
+          </div>
+        </div>
+        <div className="rounded-[9px] bg-[#F5F3FF] px-3 py-2 font-mono text-[12px] font-semibold text-[#6D28D9] ring-1 ring-[#DDD6FE]">
+          {`${value} -> ${outputBits}`}
+        </div>
+      </div>
+      <div className="grid grid-cols-[34px_repeat(16,minmax(28px,1fr))] gap-1 overflow-x-auto text-center text-[10px]">
+        <div className="rounded-[5px] bg-[#F8FAFC] py-1 text-[#94A3B8]">r/c</div>
+        {Array.from({ length: 16 }, (_, col) => (
+          <div key={`col-${col}`} className={`rounded-[5px] py-1 font-semibold ${col === column ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
+            {col}
+          </div>
+        ))}
+        {DES_S_BOXES[boxIndex].map((rowValues, rowIndex) => (
+          <Fragment key={`sbox-row-${rowIndex}`}>
+            <div key={`row-label-${rowIndex}`} className={`rounded-[5px] py-1 font-semibold ${rowIndex === row ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
+              {rowIndex}
+            </div>
+            {rowValues.map((cell, colIndex) => {
+              const selected = rowIndex === row && colIndex === column;
+              return (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={`rounded-[5px] py-1 font-mono font-semibold ${
+                    selected ? 'bg-[#7C3AED] text-white shadow-[0_4px_12px_rgba(124,58,237,0.25)]' : 'bg-white text-[#475569] ring-1 ring-[#E2E8F0]'
+                  }`}
+                >
+                  {cell}
+                </div>
+              );
+            })}
+          </Fragment>
+        ))}
       </div>
     </div>
   );
 }
 
-function RoundProgress({ currentRound, totalRounds, currentStep }: { currentRound: number; totalRounds: number; currentStep: number }) {
-  const roundPercent = (currentRound / totalRounds) * 100;
-  const stepPercent = ((currentStep + 1) / steps.length) * 100;
+function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
+  const labels = getLabels(round);
 
   return (
-    <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="text-[14px] font-semibold text-[#0F172A]">Ronde {currentRound} dari {totalRounds}</div>
-          <p className="mt-1 text-[12px] text-[#64748B]">Sekarang Anda sedang melihat langkah {currentStep + 1} dari 7 pada ronde ini.</p>
-        </div>
-        <div className="w-full max-w-[320px] space-y-3">
-          <div>
-            <div className="mb-1 flex items-center justify-between text-[11px] text-[#64748B]">
-              <span>Progress ronde</span>
-              <span>{Math.round(roundPercent)}%</span>
-            </div>
-            <Progress value={roundPercent} className="h-2 bg-[#DBEAFE] [&_[data-slot=progress-indicator]]:bg-[#2563EB]" />
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between text-[11px] text-[#64748B]">
-              <span>Progress langkah</span>
-              <span>{Math.round(stepPercent)}%</span>
-            </div>
-            <Progress value={stepPercent} className="h-2 bg-[#EDE9FE] [&_[data-slot=progress-indicator]]:bg-[#7C3AED]" />
-          </div>
+    <>
+      <div className="space-y-3">
+        <BitGrid bits={bits.leftInput} label={`${labels.leftIn} - sisi kiri (32 bit)`} />
+        <BitGrid bits={bits.rightInput} label={`${labels.rightIn} - sisi kanan (32 bit)`} />
+      </div>
+      <div className="space-y-3">
+        <FlowCard title={`Alur ronde ${round.round}`} rows={[`${labels.rightIn} masuk ke Function F`, `Function F memakai ${labels.subkey}`, `${labels.leftIn} menunggu untuk XOR akhir`]} />
+        <InfoBox step={roundSteps[0]} />
+      </div>
+    </>
+  );
+}
+
+function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  return (
+    <>
+      <div className="space-y-3">
+        <BitGrid bits={bits.rightInput} label="Input R (32 bit)" />
+        <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} />
+      </div>
+      <div className="space-y-3">
+        <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} />
+        <InfoBox step={roundSteps[1]} />
+      </div>
+    </>
+  );
+}
+
+function XorStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
+  const changedIndexes = bits.xorChanged.map((changed, index) => (changed ? index : -1)).filter((index) => index >= 0);
+
+  return (
+    <>
+      <div className="space-y-3">
+        <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} changedIndexes={changedIndexes} />
+        <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} changedIndexes={changedIndexes} />
+        <div className="rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-[12px] text-[#92400E]">
+          Bit kuning adalah posisi saat E(R) dan K berbeda, sehingga hasil XOR berubah menjadi 1.
         </div>
       </div>
+      <div className="space-y-3">
+        <BitGrid bits={bits.xorWithKey} label="E(R) XOR K (48 bit)" columns={6} changedIndexes={changedIndexes} />
+        <InfoBox step={roundSteps[2]} />
+      </div>
+    </>
+  );
+}
+
+function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  const [activeBox, setActiveBox] = useState(0);
+  const chunks = bits.xorWithKey.match(/.{1,6}/g) ?? [];
+  const outputs = bits.sboxOutput.match(/.{1,4}/g) ?? [];
+
+  useEffect(() => {
+    setActiveBox(0);
+  }, [bits.xorWithKey]);
+
+  return (
+    <>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {chunks.map((chunk, index) => {
+            const active = index === activeBox;
+            const row = parseInt(`${chunk[0]}${chunk[5]}`, 2);
+            const column = parseInt(chunk.slice(1, 5), 2);
+
+            return (
+              <button
+                key={`${chunk}-${index}`}
+                type="button"
+                onClick={() => setActiveBox(index)}
+                className={`rounded-[12px] border p-3 text-left transition-colors ${
+                  active ? 'border-[#7C3AED] bg-[#F5F3FF] shadow-[0_0_0_3px_rgba(221,214,254,0.9)]' : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]'
+                }`}
+              >
+                <div className="text-[11px] font-semibold text-[#5B21B6]">S{index + 1}</div>
+                <div className="mt-1 font-mono text-[13px] font-semibold text-[#0F172A]">{chunk}</div>
+                <div className="mt-1 text-[10px] text-[#64748B]">baris {row}, kolom {column}</div>
+                <div className="mt-2 rounded-[8px] bg-white px-2 py-1 font-mono text-[11px] text-[#6D28D9] ring-1 ring-[#DDD6FE]">
+                  out {outputs[index]}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <SBoxTable boxIndex={activeBox} chunk={chunks[activeBox] ?? '000000'} outputBits={outputs[activeBox] ?? '0000'} />
+      </div>
+      <div className="space-y-3">
+        <BitGrid bits={bits.sboxOutput} label="Output gabungan S-Box (32 bit)" />
+        <InfoBox step={roundSteps[3]} />
+      </div>
+    </>
+  );
+}
+
+function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  return (
+    <>
+      <div className="space-y-3">
+        <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" />
+        <MappingTable table={DES_PERMUTATION_P_TABLE} inputBits={bits.sboxOutput} outputBits={bits.permutationOutput} label="Tabel Permutasi P" columns={8} />
+      </div>
+      <div className="space-y-3">
+        <BitGrid bits={bits.permutationOutput} label="Output P / F(R,K) (32 bit)" />
+        <InfoBox step={roundSteps[4]} />
+      </div>
+    </>
+  );
+}
+
+function OutputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
+  const labels = getLabels(round);
+  const changedIndexes = bits.outputChanged.map((changed, index) => (changed ? index : -1)).filter((index) => index >= 0);
+
+  return (
+    <>
+      <div className="space-y-3">
+        <BitGrid bits={bits.leftInput} label={`${labels.leftIn} lama`} changedIndexes={changedIndexes} />
+        <BitGrid bits={bits.permutationOutput} label={`F(${labels.rightIn}, ${labels.subkey})`} changedIndexes={changedIndexes} />
+        <BitGrid bits={bits.rightInput} label={`${labels.rightIn} lama -> ${labels.leftOut}`} />
+      </div>
+      <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2">
+          <BitGrid bits={bits.leftOutput} label={`${labels.leftOut} = ${labels.rightIn}`} />
+          <BitGrid bits={bits.rightOutput} label={`${labels.rightOut} = ${labels.leftIn} XOR F`} changedIndexes={changedIndexes} />
+        </div>
+        <div className="rounded-[14px] border border-[#FECDD3] bg-[#FFF1F2] p-4">
+          <div className="mb-3 flex items-center gap-2 text-[12px] font-semibold text-[#BE123C]">
+            <Shuffle className="h-4 w-4" />
+            Swap ronde
+          </div>
+          <div className="flex flex-col gap-2 text-[12px] text-[#475569] sm:flex-row sm:items-center">
+            <span className="rounded-[9px] bg-white px-3 py-2 font-mono ring-1 ring-[#E2E8F0]">{labels.leftOut} = {labels.rightIn}</span>
+            <ArrowRight className="hidden h-4 w-4 text-[#94A3B8] sm:block" />
+            <span className="rounded-[9px] bg-white px-3 py-2 font-mono ring-1 ring-[#E2E8F0]">{labels.rightOut} = {labels.leftIn} XOR F</span>
+          </div>
+        </div>
+        <InfoBox step={roundSteps[5]} />
+      </div>
+    </>
+  );
+}
+
+function FlowCard({ title, rows }: { title: string; rows: string[] }) {
+  return (
+    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-4">
+      <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">{title}</div>
+      <div className="space-y-2">
+        {rows.map((row, index) => (
+          <div key={row} className="flex items-center gap-3 rounded-[11px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-[12px] text-[#475569]">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white font-mono text-[11px] font-semibold text-[#0F172A] ring-1 ring-[#E2E8F0]">
+              {index + 1}
+            </span>
+            <span>{row}</span>
+          </div>
+        ))}
+      </div>
     </div>
+  );
+}
+
+function StepContent({
+  round,
+  activeStep,
+  bits,
+}: {
+  round: FeistelRoundData;
+  activeStep: number;
+  bits: ReturnType<typeof useRoundBits>;
+}) {
+  const step = roundSteps[activeStep];
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`${round.round}-${step.id}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.22 }}
+        className="rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] p-4 md:p-5"
+      >
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold ${toneClass[step.tone].soft}`}>
+              <CircleDot className="h-3.5 w-3.5" />
+              Langkah {activeStep + 1}/6
+            </div>
+            <h3 className="mt-2 text-[18px] font-semibold text-[#0F172A]">{step.title}</h3>
+          </div>
+          <div className={`w-fit rounded-[10px] border px-3 py-2 text-[12px] font-semibold ${toneClass[step.tone].active}`}>{step.size}</div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[0.96fr_1.04fr]">
+          {step.id === 'input' && <InputStep round={round} bits={bits} />}
+          {step.id === 'expansion' && <ExpansionStep bits={bits} />}
+          {step.id === 'xor-key' && <XorStep round={round} bits={bits} />}
+          {step.id === 'sbox' && <SBoxStep bits={bits} />}
+          {step.id === 'permutation' && <PermutationStep bits={bits} />}
+          {step.id === 'output' && <OutputStep round={round} bits={bits} />}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
 export function FeistelRoundsVisualization({ data }: FeistelRoundsVisualizationProps) {
   const [currentRound, setCurrentRound] = useState(1);
   const [activeStep, setActiveStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showExplanation, setShowExplanation] = useState(true);
 
   const totalRounds = data.length;
   const clampedRound = Math.min(Math.max(currentRound, 1), Math.max(totalRounds, 1));
   const currentData = useMemo(() => data.find((item) => item.round === clampedRound) ?? data[0], [clampedRound, data]);
+  const bits = useRoundBits(currentData ?? {
+    round: 1,
+    leftInput: '',
+    rightInput: '',
+    expansion: '',
+    xorWithKey: '',
+    sboxOutput: '',
+    permutationOutput: '',
+    leftOutput: '',
+    rightOutput: '',
+    subkey: '',
+  });
 
   useEffect(() => {
     setCurrentRound((previous) => {
@@ -609,103 +693,70 @@ export function FeistelRoundsVisualization({ data }: FeistelRoundsVisualizationP
     });
   }, [data.length]);
 
-  useEffect(() => {
-    if (!isPlaying || data.length === 0) return undefined;
+  if (!currentData) return null;
 
-    const timer = window.setInterval(() => {
-      setActiveStep((previousStep) => {
-        if (previousStep < steps.length - 1) {
-          return previousStep + 1;
-        }
-
-        setCurrentRound((previousRound) => {
-          if (previousRound < data.length) {
-            return previousRound + 1;
-          }
-
-          setIsPlaying(false);
-          return previousRound;
-        });
-
-        return 0;
-      });
-    }, 1800);
-
-    return () => window.clearInterval(timer);
-  }, [data.length, isPlaying]);
-
-  if (!currentData) {
-    return null;
-  }
-
-  const goToRound = (round: number) => {
-    setIsPlaying(false);
+  const selectRound = (round: number) => {
     setCurrentRound(round);
     setActiveStep(0);
   };
 
-  const nextStep = () => {
-    setIsPlaying(false);
-    setActiveStep((previousStep) => {
-      if (previousStep < steps.length - 1) {
-        return previousStep + 1;
-      }
-
-      setCurrentRound((previousRound) => Math.min(previousRound + 1, totalRounds));
-      return 0;
-    });
-  };
-
-  const previousStep = () => {
-    setIsPlaying(false);
-    if (activeStep > 0) {
-      setActiveStep((previous) => previous - 1);
+  const goNext = () => {
+    if (activeStep < roundSteps.length - 1) {
+      setActiveStep((step) => step + 1);
       return;
     }
 
-    if (currentRound > 1) {
-      setCurrentRound((previous) => previous - 1);
-      setActiveStep(steps.length - 1);
+    if (currentData.round < totalRounds) {
+      setCurrentRound((round) => round + 1);
+      setActiveStep(0);
     }
   };
 
-  const reset = () => {
-    setIsPlaying(false);
-    setCurrentRound(1);
-    setActiveStep(0);
-    setShowExplanation(true);
+  const goPrevious = () => {
+    if (activeStep > 0) {
+      setActiveStep((step) => step - 1);
+      return;
+    }
+
+    if (currentData.round > 1) {
+      setCurrentRound((round) => round - 1);
+      setActiveStep(roundSteps.length - 1);
+    }
   };
 
   return (
     <div className="space-y-4">
-      <StepHeader />
-      <AnalogyAlert />
-      <FormulaCard round={currentData} />
-      <RoundProgress currentRound={currentData.round} totalRounds={totalRounds} currentStep={activeStep} />
-      <FeistelDiagram round={currentData} activeStep={activeStep} />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <StepByStepPanel
-          round={currentData}
-          activeStep={activeStep}
-          setActiveStep={(step) => {
-            setIsPlaying(false);
-            setActiveStep(step);
-          }}
-          showExplanation={showExplanation}
-        />
-        <div className="space-y-4">
-          <OutputCard round={currentData} />
-          <RoundNavigation totalRounds={totalRounds} currentRound={currentData.round} setCurrentRound={goToRound} />
-          <PlaybackControls
-            isPlaying={isPlaying}
-            onTogglePlay={() => setIsPlaying((previous) => !previous)}
-            onPreviousStep={previousStep}
-            onNextStep={nextStep}
-            onReset={reset}
-            showExplanation={showExplanation}
-            onToggleExplanation={() => setShowExplanation((previous) => !previous)}
-          />
+      <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-4 shadow-sm">
+        <RoundSelector totalRounds={totalRounds} currentRound={currentData.round} onSelectRound={selectRound} />
+        <div className="mt-4">
+          <MetaBar round={currentData} totalRounds={totalRounds} bits={bits} />
         </div>
+      </div>
+      <StepTabs activeIndex={activeStep} onSelect={setActiveStep} />
+      <StepContent round={currentData} activeStep={activeStep} bits={bits} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={goPrevious}
+          disabled={currentData.round === 1 && activeStep === 0}
+          className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#0F172A] transition-colors hover:bg-[#F8FAFC] disabled:opacity-40"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </button>
+        <div className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] text-[#64748B]">
+          <KeyRound className="h-4 w-4 text-[#F59E0B]" />
+          {roundSteps[activeStep].tab} pada R{currentData.round}
+        </div>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={currentData.round === totalRounds && activeStep === roundSteps.length - 1}
+          className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:opacity-40"
+        >
+          {activeStep === roundSteps.length - 1 && currentData.round < totalRounds ? `R${currentData.round + 1}` : 'Next'}
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

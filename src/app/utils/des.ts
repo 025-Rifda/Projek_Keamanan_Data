@@ -12,7 +12,7 @@ export const DES_INITIAL_PERMUTATION_TABLE = [
   63, 55, 47, 39, 31, 23, 15, 7,
 ];
 
-const FP = [
+export const DES_FINAL_PERMUTATION_TABLE = [
   40, 8, 48, 16, 56, 24, 64, 32,
   39, 7, 47, 15, 55, 23, 63, 31,
   38, 6, 46, 14, 54, 22, 62, 30,
@@ -23,7 +23,7 @@ const FP = [
   33, 1, 41, 9, 49, 17, 57, 25,
 ];
 
-const E = [
+export const DES_EXPANSION_TABLE = [
   32, 1, 2, 3, 4, 5,
   4, 5, 6, 7, 8, 9,
   8, 9, 10, 11, 12, 13,
@@ -34,7 +34,7 @@ const E = [
   28, 29, 30, 31, 32, 1,
 ];
 
-const P = [
+export const DES_PERMUTATION_P_TABLE = [
   16, 7, 20, 21, 29, 12, 28, 17,
   1, 15, 23, 26, 5, 18, 31, 10,
   2, 8, 24, 14, 32, 27, 3, 9,
@@ -65,7 +65,7 @@ const PC2 = [
 
 const SHIFTS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1];
 
-const S_BOXES = [
+export const DES_S_BOXES = [
   [
     [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
     [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
@@ -264,7 +264,7 @@ function applySBoxes(bits: Bit[]): Bit[] {
     const chunk = bits.slice(index * 6, (index + 1) * 6);
     const row = (chunk[0] << 1) | chunk[5];
     const column = (chunk[1] << 3) | (chunk[2] << 2) | (chunk[3] << 1) | chunk[4];
-    const value = S_BOXES[index][row][column];
+    const value = DES_S_BOXES[index][row][column];
     for (let shift = 3; shift >= 0; shift--) {
       output.push(((value >> shift) & 1) as Bit);
     }
@@ -303,10 +303,10 @@ function generateKeySchedule(keyBits: Bit[]) {
 }
 
 function computeFeistelRound(L: Bit[], R: Bit[], subkey: Bit[], round: number, subkeyIndex: number): DESRoundDetails & { nextL: Bit[]; nextR: Bit[] } {
-  const expandedR = permute(R, E);
+  const expandedR = permute(R, DES_EXPANSION_TABLE);
   const xorWithSubkey = xorBits(expandedR, subkey);
   const sBoxOutput = applySBoxes(xorWithSubkey);
-  const pOutput = permute(sBoxOutput, P);
+  const pOutput = permute(sBoxOutput, DES_PERMUTATION_P_TABLE);
   const nextL = [...R] as Bit[];
   const nextR = xorBits(L, pOutput);
 
@@ -349,7 +349,7 @@ function buildDESDetailsFromBits(
   }
 
   const preOutputBits = [...R, ...L] as Bit[];
-  const finalOutputBits = permute(preOutputBits, FP);
+  const finalOutputBits = permute(preOutputBits, DES_FINAL_PERMUTATION_TABLE);
   const outputBytes = bitsToBytes(finalOutputBits);
 
   return {
