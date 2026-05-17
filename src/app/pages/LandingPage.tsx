@@ -58,7 +58,7 @@ export function LandingPage() {
           className="text-[28px] md:text-[36px] lg:text-[46px] font-semibold bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#2563EB] bg-clip-text text-transparent max-w-[620px] mx-auto mb-4 px-4"
           style={{ lineHeight: 1.2 }}
         >
-          Pelajari enkripsi modern secara interaktif
+          Pelajari enkripsi & dekripsi modern secara interaktif
         </motion.h1>
 
         <motion.p
@@ -68,7 +68,7 @@ export function LandingPage() {
           className="text-[13px] md:text-[15px] text-[#64748B] max-w-[480px] mx-auto px-4"
           style={{ lineHeight: 1.7 }}
         >
-          Eksplorasi dua algoritma enkripsi — DES dan ChaCha20 — dengan visualisasi langkah demi langkah yang mudah dipahami
+          Eksplorasi dua algoritma enkripsi dekripsi — DES dan ChaCha20 — dengan visualisasi langkah demi langkah yang mudah dipahami
         </motion.p>
       </section>
 

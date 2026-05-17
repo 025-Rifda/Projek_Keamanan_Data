@@ -34,6 +34,9 @@ import { validateDESEncryptInput } from '../utils/validation';
 const stepData = [
   {
     num: 1,
+    badgeLabel: 'Langkah 1',
+    breadcrumbLabel: 'Initial Permutation',
+    slug: 'initial-permutation',
     title: 'Mengubah teks menjadi biner',
     subtitle: 'Setiap 8 byte plaintext dipecah menjadi 64 bit sebelum masuk ke DES.',
     analogy: 'Bayangkan setiap huruf harus diubah dulu jadi kartu angka 0 dan 1 agar mesin DES bisa membacanya.',
@@ -42,6 +45,9 @@ const stepData = [
   },
   {
     num: 2,
+    badgeLabel: 'Langkah 2',
+    breadcrumbLabel: 'Split L0 dan R0',
+    slug: 'split-l0-r0',
     title: 'Initial Permutation (IP)',
     subtitle: '64 bit plaintext diatur ulang sesuai tabel IP tanpa mengubah nilainya.',
     analogy: 'Bit-bit ini seperti 64 orang yang diminta pindah posisi mengikuti daftar kursi baru.',
@@ -50,6 +56,9 @@ const stepData = [
   },
   {
     num: 3,
+    badgeLabel: 'Langkah 3',
+    breadcrumbLabel: 'Key Schedule',
+    slug: 'key-schedule',
     title: 'Key Schedule dan 16 Subkey',
     subtitle: 'Key 64-bit diproses lewat PC-1, shift kiri, dan PC-2 untuk membentuk K1 sampai K16.',
     analogy: 'Satu kunci utama diputar dan dipotong berkali-kali sampai terbentuk 16 kunci turunan dengan urutan berbeda.',
@@ -58,6 +67,9 @@ const stepData = [
   },
   {
     num: 4,
+    badgeLabel: 'Langkah 4',
+    breadcrumbLabel: '16 Ronde Feistel',
+    slug: 'feistel-rounds',
     title: '16 Ronde Feistel',
     subtitle: 'Setiap ronde menghitung E, XOR, S-Box, P, lalu membentuk L_i dan R_i baru.',
     analogy: 'Setiap putaran mengacak sisi kanan, mencampurnya dengan subkey, lalu menukar posisinya dengan sisi kiri.',
@@ -66,19 +78,25 @@ const stepData = [
   },
   {
     num: 5,
-    title: 'Avalanche Effect',
-    subtitle: '1 bit plaintext dibalik lalu dibandingkan dampaknya terhadap ciphertext.',
-    analogy: 'Seperti mendorong domino pertama dan melihat berapa banyak domino lain yang ikut berubah.',
-    why: 'Cipher yang baik harus memperlihatkan efek perubahan besar meski perubahan pada input sangat kecil.',
-    tagColor: { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D' },
-  },
-  {
-    num: 6,
+    badgeLabel: 'Langkah 5',
+    breadcrumbLabel: 'Final Permutation',
+    slug: 'final-permutation',
     title: 'Final Swap, FP, dan Ciphertext',
     subtitle: 'Setelah 16 ronde, blok ditukar lalu dipermutasi akhir untuk menghasilkan ciphertext.',
     analogy: 'Setelah semua pencampuran selesai, hasilnya disusun ulang sekali lagi sebelum keluar sebagai pesan rahasia.',
     why: 'Final swap dan final permutation menutup struktur DES dan menghasilkan blok keluaran 64-bit yang baku.',
     tagColor: { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+  },
+  {
+    num: 6,
+    badgeLabel: 'Langkah 6',
+    breadcrumbLabel: 'Analisis Avalanche',
+    slug: 'avalanche-effect',
+    title: 'Avalanche Effect',
+    subtitle: 'Setelah ciphertext final dihasilkan, kita dapat menguji Avalanche Effect untuk melihat seberapa besar perubahan output ketika input diubah sedikit.',
+    analogy: 'Seperti mendorong domino pertama setelah proses selesai, lalu melihat seberapa banyak hasil akhir ikut berubah.',
+    why: 'Analisis ini membantu menunjukkan bahwa DES memiliki difusi yang kuat: perubahan kecil pada input bisa menghasilkan ciphertext yang sangat berbeda.',
+    tagColor: { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D' },
   },
 ];
 
@@ -1665,46 +1683,13 @@ function AvalancheBitGrid({
   );
 }
 
-function Step5Visual({ avalanche }: { avalanche: DESAvalancheResult }) {
-  return (
-    <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
-      <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Avalanche effect dari input user</span>
-      </div>
-      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <div className="text-[11px] font-medium text-[#64748B] mb-2">Plaintext asli</div>
-          <div className="text-[12px] font-mono text-[#0F172A] mb-2">"{avalanche.originalPlaintext}"</div>
-          <div className="text-[12px] text-[#64748B] mb-2">Ciphertext: <span className="font-mono text-[#0F172A]">{avalanche.originalCiphertext}</span></div>
-          <AvalancheBitGrid sourceBits={avalanche.originalCipherBits} comparisonBits={avalanche.modifiedCipherBits} />
-        </div>
-        <div>
-          <div className="text-[11px] font-medium text-[#64748B] mb-2">Plaintext dengan 1 bit dibalik</div>
-          <div className="text-[12px] font-mono text-[#0F172A] mb-2">"{avalanche.modifiedPlaintext}"</div>
-          <div className="text-[12px] text-[#64748B] mb-2">Ciphertext: <span className="font-mono text-[#0F172A]">{avalanche.modifiedCiphertext}</span></div>
-          <AvalancheBitGrid sourceBits={avalanche.modifiedCipherBits} comparisonBits={avalanche.originalCipherBits} />
-        </div>
-      </div>
-      <div className="px-4 pb-4">
-        <div className="bg-[#F0FDF4] border-[0.5px] border-[#86EFAC] rounded-[8px] px-3 py-3">
-          <p className="text-[12px] text-[#15803D]" style={{ lineHeight: 1.6 }}>
-            Bit yang diubah ada di posisi <span className="font-medium">{avalanche.changedBitIndex + 1}</span>. Hasilnya,
-            <span className="font-medium"> {avalanche.differentBits} dari {avalanche.totalBits} bit</span> ciphertext berubah
-            atau <span className="font-medium">{avalanche.percentage.toFixed(2)}%</span>.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Step6Visual({ details }: { details: DESDetails }) {
+function Step5Visual({ details }: { details: DESDetails }) {
   const finalBits = parseBitString(details.finalOutputBits);
 
   return (
     <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
       <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
-        <span className="text-[12px] font-medium text-[#64748B]">Final output DES</span>
+        <span className="text-[12px] font-medium text-[#64748B]">Langkah 5: Final Swap, Final Permutation, dan ciphertext</span>
       </div>
       <div className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
@@ -1734,6 +1719,46 @@ function Step6Visual({ details }: { details: DESDetails }) {
           <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
             Ciphertext akhir dalam hex adalah <span className="font-mono text-[#0F172A]">{details.finalOutput}</span>.
             Nilai ini dihasilkan langsung dari 16 ronde, final swap, dan final permutation untuk input user saat ini.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step6Visual({ avalanche }: { avalanche: DESAvalancheResult }) {
+  return (
+    <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] overflow-hidden mb-3">
+      <div className="h-10 px-4 border-b-[0.5px] border-[#E2E8F0] flex items-center gap-2">
+        <span className="text-[12px] font-medium text-[#64748B]">Langkah 6: Analisis Avalanche Effect</span>
+      </div>
+      <div className="p-4">
+        <div className="mb-4 rounded-[10px] border-[0.5px] border-[#BFDBFE] bg-[#EFF6FF] px-3.5 py-3">
+          <p className="text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
+            Setelah ciphertext final dihasilkan, kita dapat menguji Avalanche Effect untuk melihat seberapa besar perubahan output ketika input diubah sedikit.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-[11px] font-medium text-[#64748B] mb-2">Plaintext asli</div>
+            <div className="text-[12px] font-mono text-[#0F172A] mb-2">"{avalanche.originalPlaintext}"</div>
+            <div className="text-[12px] text-[#64748B] mb-2">Ciphertext: <span className="font-mono text-[#0F172A]">{avalanche.originalCiphertext}</span></div>
+            <AvalancheBitGrid sourceBits={avalanche.originalCipherBits} comparisonBits={avalanche.modifiedCipherBits} />
+          </div>
+          <div>
+            <div className="text-[11px] font-medium text-[#64748B] mb-2">Plaintext dengan 1 bit dibalik</div>
+            <div className="text-[12px] font-mono text-[#0F172A] mb-2">"{avalanche.modifiedPlaintext}"</div>
+            <div className="text-[12px] text-[#64748B] mb-2">Ciphertext: <span className="font-mono text-[#0F172A]">{avalanche.modifiedCiphertext}</span></div>
+            <AvalancheBitGrid sourceBits={avalanche.modifiedCipherBits} comparisonBits={avalanche.originalCipherBits} />
+          </div>
+        </div>
+
+        <div className="bg-[#F0FDF4] border-[0.5px] border-[#86EFAC] rounded-[8px] px-3 py-3">
+          <p className="text-[12px] text-[#15803D]" style={{ lineHeight: 1.6 }}>
+            Bit yang diubah ada di posisi <span className="font-medium">{avalanche.changedBitIndex + 1}</span>. Hasilnya,
+            <span className="font-medium"> {avalanche.differentBits} dari {avalanche.totalBits} bit</span> ciphertext berubah
+            atau <span className="font-medium">{avalanche.percentage.toFixed(2)}%</span>.
           </p>
         </div>
       </div>
@@ -1778,6 +1803,10 @@ export function VisualisasiPage() {
 
   const step = stepData[currentStep];
 
+  useEffect(() => {
+    document.title = `${step.badgeLabel}: ${step.title} | Visualisasi DES`;
+  }, [step]);
+
   const handleNext = () => {
     if (currentStep < 5) {
       setCurrentStep((previous) => previous + 1);
@@ -1794,6 +1823,9 @@ export function VisualisasiPage() {
     <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] pt-6 md:pt-8 pb-8 md:pb-12 px-4 md:px-8 lg:px-16 xl:px-[290px]">
       <div className="max-w-[860px] mx-auto">
         <div className="mb-3.5">
+          <div className="mb-2 text-[11px] text-[#94A3B8]">
+            DES / {step.badgeLabel} / {step.breadcrumbLabel}
+          </div>
           <div className="flex gap-1 mb-2">
             {Array.from({ length: 6 }, (_, index) => (
               <div
@@ -1819,7 +1851,7 @@ export function VisualisasiPage() {
             }}
           >
             <CircleDot className="w-3 h-3" />
-            <span className="text-[11px] font-medium">Langkah {step.num}</span>
+            <span className="text-[11px] font-medium">{step.badgeLabel}</span>
           </div>
           <h2 className="text-[16px] font-medium text-[#0F172A] mt-2.5 mb-1.5">{step.title}</h2>
           <p className="text-[13px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
@@ -1867,8 +1899,8 @@ export function VisualisasiPage() {
             {currentStep === 1 && <Step2Visual details={details} />}
             {currentStep === 2 && <Step3StoryVisual currentRound={currentRound} setCurrentRound={setCurrentRound} details={details} />}
             {currentStep === 3 && <Step4Visual details={details} />}
-            {currentStep === 4 && <Step5Visual avalanche={avalanche} />}
-            {currentStep === 5 && <Step6Visual details={details} />}
+            {currentStep === 4 && <Step5Visual details={details} />}
+            {currentStep === 5 && <Step6Visual avalanche={avalanche} />}
           </>
         )}
 
