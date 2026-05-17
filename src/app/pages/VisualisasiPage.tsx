@@ -1161,20 +1161,73 @@ function Step3StoryVisual({
   );
 
   const ShiftRow = ({ label, before, after, tone }: { label: string; before: string; after: string; tone: 'purple' | 'green' }) => {
-    const visibleBefore = before.slice(0, 12);
-    const visibleAfter = after.slice(0, 12);
     const moved = before.slice(0, schedule.shift);
+    const shiftedBody = before.slice(schedule.shift);
+    const processBits = `${shiftedBody}${moved}`;
+    const moveLabel = `Shift Left ${schedule.shift}x`;
+    const toneText = tone === 'purple' ? 'text-[#6D28D9]' : 'text-[#15803D]';
+    const toneBg = tone === 'purple' ? 'bg-[#F5F3FF] border-[#DDD6FE]' : 'bg-[#F0FDF4] border-[#BBF7D0]';
+    const toneDot = tone === 'purple' ? 'bg-[#6D28D9]' : 'bg-[#16A34A]';
+
+    const ShiftBitGrid = ({
+      bits,
+      stage,
+      animated = false,
+    }: {
+      bits: string;
+      stage: 'before' | 'process' | 'after';
+      animated?: boolean;
+    }) => (
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        {bits.split('').map((bit, index) => {
+          const isMovedBefore = stage === 'before' && index < schedule.shift;
+          const isMovedAtBack = (stage === 'process' || stage === 'after') && index >= bits.length - schedule.shift;
+          const isMoved = isMovedBefore || isMovedAtBack;
+          const delay = animated ? Math.min(index * 0.012, 0.28) : 0;
+
+          return (
+            <motion.div
+              key={`${label}-${stage}-${index}-${bit}`}
+              initial={animated ? { y: stage === 'process' ? -8 : 8, opacity: 0 } : false}
+              animate={animated ? { y: 0, opacity: 1 } : { opacity: 1 }}
+              transition={{ duration: 0.28, delay }}
+              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+                isMoved
+                  ? 'border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-[0_8px_18px_rgba(245,158,11,0.18)]'
+                  : `${toneBg} ${toneText}`
+              }`}
+              title={isMoved ? `Bit yang dipindahkan ke belakang: ${bit}` : `Bit ${index + 1}`}
+            >
+              {bit}
+              {isMoved && (
+                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#F59E0B] ring-2 ring-white" />
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+
     return (
       <div className="rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div className={`text-[13px] font-semibold ${tone === 'purple' ? 'text-[#6D28D9]' : 'text-[#15803D]'}`}>{label}</div>
-          <div className="rounded-full bg-white px-2.5 py-1 text-[11px] text-[#64748B] ring-1 ring-[#E2E8F0]">
-            shift {schedule.shift}
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className={`text-[13px] font-semibold ${toneText}`}>{label}</div>
+          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-[#0F172A] ring-1 ring-[#E2E8F0]">
+            <span className={`h-2 w-2 rounded-full ${toneDot}`} />
+            {moveLabel}
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-center">
-          <BitGrid bits={visibleBefore} columns="grid-cols-6" tone={tone} />
-          <div className="flex items-center justify-center">
+
+        <div className="grid gap-3 xl:grid-cols-[1fr_auto_1fr_auto_1fr] xl:items-start">
+          <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[12px] font-semibold text-[#0F172A]">1. Sebelum shift</div>
+              <div className="text-[10px] text-[#64748B]">28 bit</div>
+            </div>
+            <ShiftBitGrid bits={before} stage="before" />
+          </div>
+
+          <div className="flex items-center justify-center xl:pt-20">
             <motion.div
               animate={{ x: [-10, 10, -10] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
@@ -1183,10 +1236,41 @@ function Step3StoryVisual({
               <ArrowRight className="h-4 w-4 rotate-90 md:rotate-0" />
             </motion.div>
           </div>
-          <BitGrid bits={visibleAfter} columns="grid-cols-6" tone={tone} animated />
+
+          <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[12px] font-semibold text-[#1D4ED8]">2. Proses shift</div>
+              <div className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#1D4ED8] ring-1 ring-[#BFDBFE]">
+                {moveLabel}
+              </div>
+            </div>
+            <ShiftBitGrid bits={processBits} stage="process" animated />
+            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#1D4ED8]">
+              <span>Bit lain maju ke kiri</span>
+              <span className="font-mono font-semibold">{moved} {'->'} belakang</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center xl:pt-20">
+            <motion.div
+              animate={{ x: [-10, 10, -10] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
+              className="rounded-full bg-white p-2 text-[#2563EB] ring-1 ring-[#BFDBFE]"
+            >
+              <ArrowRight className="h-4 w-4 rotate-90 md:rotate-0" />
+            </motion.div>
+          </div>
+
+          <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[12px] font-semibold text-[#0F172A]">3. Hasil shift</div>
+              <div className="text-[10px] text-[#64748B]">28 bit</div>
+            </div>
+            <ShiftBitGrid bits={after} stage="after" animated />
+          </div>
         </div>
         <div className="mt-3 rounded-[10px] bg-white px-3 py-2 text-[12px] text-[#64748B] ring-1 ring-[#E2E8F0]">
-          Bit paling kiri <span className="font-mono font-semibold text-[#0F172A]">{moved}</span> berputar ke belakang, bukan hilang.
+          Bit paling kiri <span className="font-mono font-semibold text-[#92400E]">{moved}</span> diberi warna amber dan dipindahkan ke belakang, bukan dibuang.
         </div>
       </div>
     );
