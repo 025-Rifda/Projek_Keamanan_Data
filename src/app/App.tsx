@@ -67,7 +67,6 @@ export default function App() {
           }
         />
         <Route path="/dekripsi/des" element={<Navigate to="/uji-coba" replace state={{ mode: 'decrypt', algorithm: 'DES' }} />} />
-        <Route path="/dekripsi/chacha20" element={<Navigate to="/uji-coba" replace state={{ mode: 'decrypt', algorithm: 'ChaCha20' }} />} />
 
         {/* Redirect unknown routes to splash */}
         <Route path="*" element={<Navigate to="/" replace />} />

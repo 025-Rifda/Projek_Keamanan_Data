@@ -1,12 +1,10 @@
 export interface CryptoHistoryItem {
   id: number;
-  algorithm: 'DES' | 'ChaCha20';
+  algorithm: 'DES';
   mode: 'encrypt' | 'decrypt';
   plaintext: string;
   ciphertext: string;
   key: string;
-  nonce?: string;
-  counter?: string;
   timestamp: string;
 }
 

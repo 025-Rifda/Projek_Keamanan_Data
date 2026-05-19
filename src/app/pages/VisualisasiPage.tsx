@@ -20,7 +20,6 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { FeistelRoundsVisualization, type FeistelRoundData } from '../components/FeistelRoundsVisualization';
 import { useAlgorithm } from '../context/AlgorithmContext';
-import { VisualisasiChaCha20Page } from './VisualisasiChaCha20Page';
 import {
   calculateDESAvalanche,
   DES_FINAL_PERMUTATION_TABLE,
@@ -1992,14 +1991,10 @@ function Step6Visual({ avalanche }: { avalanche: DESAvalancheResult }) {
 }
 
 export function VisualisasiPage() {
-  const { algorithm, plaintext, key } = useAlgorithm();
+  const { plaintext, key } = useAlgorithm();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const navigate = useNavigate();
-
-  if (algorithm === 'ChaCha20') {
-    return <VisualisasiChaCha20Page />;
-  }
 
   const validation = useMemo(() => validateDESEncryptInput(plaintext, key), [plaintext, key]);
   const details = useMemo(() => {

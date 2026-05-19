@@ -23,7 +23,7 @@ const developers = [
   {
     name: 'Budi Santoso',
     role: 'Cryptography Expert',
-    description: 'Ahli kriptografi dengan pengalaman dalam implementasi ChaCha20 dan analisis keamanan algoritma enkripsi modern.',
+    description: 'Ahli kriptografi dengan pengalaman dalam analisis struktur Feistel, key schedule DES, dan evaluasi keamanan algoritma klasik.',
     photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi',
     github: 'https://github.com/budisantoso',
     linkedin: 'https://linkedin.com/in/budisantoso',
@@ -158,7 +158,7 @@ export function PengembangPage() {
             <h2 className="text-[20px] font-semibold text-[#0F172A] mb-4">Tentang Proyek</h2>
             <p className="text-[14px] text-[#64748B] mb-4" style={{ lineHeight: 1.7 }}>
               CryptoDES adalah platform edukasi kriptografi yang dikembangkan untuk membantu siswa dan mahasiswa memahami
-              algoritma enkripsi DES dan ChaCha20 melalui visualisasi interaktif dan penjelasan yang mudah dipahami.
+              algoritma enkripsi DES melalui visualisasi interaktif dan penjelasan yang mudah dipahami.
             </p>
             <p className="text-[14px] text-[#64748B]" style={{ lineHeight: 1.7 }}>
               Proyek ini open source dan tersedia di{' '}

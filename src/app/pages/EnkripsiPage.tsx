@@ -1,27 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Pencil, FileText, Copy, Eye, Zap, AlertCircle, LoaderCircle } from 'lucide-react';
+import { Lock, Pencil, FileText, Copy, Eye, AlertCircle, LoaderCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAlgorithm } from '../context/AlgorithmContext';
-import { decryptChaCha20, encryptChaCha20 } from '../utils/chacha20';
 import { decryptDES, encryptDES } from '../utils/des';
 import { appendCryptoHistory } from '../utils/history';
 import {
   getByteLength,
   normalizeHexInput,
-  parseCounter,
-  validateChaCha20DecryptInput,
-  validateChaCha20EncryptInput,
   validateDESDecryptInput,
   validateDESEncryptInput,
 } from '../utils/validation';
 
 type UjiCobaRouteState = {
   mode?: 'encrypt' | 'decrypt';
-  algorithm?: 'DES' | 'ChaCha20';
+  algorithm?: 'DES';
   input?: string;
   key?: string;
-  nonce?: string;
-  counter?: string;
 };
 
 export function EnkripsiPage() {
@@ -34,10 +28,6 @@ export function EnkripsiPage() {
     setPlaintext,
     key,
     setKey,
-    nonce,
-    setNonce,
-    counter,
-    setCounter,
   } = useAlgorithm();
   const [mode, setMode] = useState<'encrypt' | 'decrypt'>(routeState?.mode ?? 'encrypt');
   const [result, setResult] = useState('');
@@ -64,35 +54,22 @@ export function EnkripsiPage() {
     if (routeState.key !== undefined) {
       setKey(routeState.key);
     }
-    if (routeState.nonce !== undefined) {
-      setNonce(routeState.nonce);
-    }
-    if (routeState.counter !== undefined) {
-      setCounter(routeState.counter);
-    }
 
     setResult('');
     setInputLength(0);
     setOutputLength(0);
     setError('');
-  }, [routeState, setAlgorithm, setPlaintext, setKey, setNonce, setCounter]);
+  }, [routeState, setAlgorithm, setPlaintext, setKey]);
 
   const normalizedInput = mode === 'decrypt' ? normalizeHexInput(plaintext) : plaintext;
-  const keyLength = algorithm === 'DES' ? 8 : 32;
-  const keyPlaceholder = algorithm === 'DES' ? 'MYKEY123' : '1234567890ABCDEF1234567890ABCDEF';
-  const noncePlaceholder = 'NONCE-123456';
+  const keyLength = 8;
+  const keyPlaceholder = 'MYKEY123';
 
   const validation = useMemo(() => {
-    if (algorithm === 'DES') {
-      return mode === 'encrypt'
-        ? validateDESEncryptInput(plaintext, key)
-        : validateDESDecryptInput(plaintext, key);
-    }
-
     return mode === 'encrypt'
-      ? validateChaCha20EncryptInput(plaintext, key, nonce, counter)
-      : validateChaCha20DecryptInput(plaintext, key, nonce, counter);
-  }, [algorithm, mode, plaintext, key, nonce, counter]);
+      ? validateDESEncryptInput(plaintext, key)
+      : validateDESDecryptInput(plaintext, key);
+  }, [mode, plaintext, key]);
 
   const canOpenVisualization = mode === 'encrypt' && result.length > 0 && !error;
 
@@ -104,12 +81,8 @@ export function EnkripsiPage() {
   };
 
   const emptyStateText = mode === 'decrypt'
-    ? algorithm === 'ChaCha20'
-      ? 'Masukkan ciphertext, key, nonce, dan counter untuk melakukan dekripsi.'
-      : 'Masukkan ciphertext dan key untuk melakukan dekripsi.'
-    : algorithm === 'ChaCha20'
-      ? 'Masukkan plaintext, key, dan nonce untuk melihat proses.'
-      : 'Masukkan plaintext dan key untuk melihat proses.';
+    ? 'Masukkan ciphertext dan key untuk melakukan dekripsi.'
+    : 'Masukkan plaintext dan key untuk melihat proses.';
 
   const handleProcess = async () => {
     if (!validation.isValid) {
@@ -122,28 +95,15 @@ export function EnkripsiPage() {
 
     try {
       let nextResult = '';
-      const parsedCounter = parseCounter(counter) ?? 0;
 
-      if (algorithm === 'DES') {
-        if (mode === 'encrypt') {
-          nextResult = encryptDES(plaintext, key);
-          setInputLength(getByteLength(plaintext));
-          setOutputLength(nextResult.length / 2);
-        } else {
-          nextResult = decryptDES(normalizedInput, key);
-          setInputLength(normalizedInput.length / 2);
-          setOutputLength(getByteLength(nextResult));
-        }
+      if (mode === 'encrypt') {
+        nextResult = encryptDES(plaintext, key);
+        setInputLength(getByteLength(plaintext));
+        setOutputLength(nextResult.length / 2);
       } else {
-        if (mode === 'encrypt') {
-          nextResult = encryptChaCha20(plaintext, key, nonce, parsedCounter);
-          setInputLength(getByteLength(plaintext));
-          setOutputLength(nextResult.length / 2);
-        } else {
-          nextResult = decryptChaCha20(normalizedInput, key, nonce, parsedCounter);
-          setInputLength(normalizedInput.length / 2);
-          setOutputLength(getByteLength(nextResult));
-        }
+        nextResult = decryptDES(normalizedInput, key);
+        setInputLength(normalizedInput.length / 2);
+        setOutputLength(getByteLength(nextResult));
       }
 
       setResult(nextResult);
@@ -153,8 +113,6 @@ export function EnkripsiPage() {
         plaintext: mode === 'encrypt' ? plaintext : nextResult,
         ciphertext: mode === 'encrypt' ? nextResult : normalizedInput,
         key,
-        nonce: algorithm === 'ChaCha20' ? nonce : undefined,
-        counter: algorithm === 'ChaCha20' ? counter : undefined,
       });
     } catch (processError) {
       console.error(processError);
@@ -180,35 +138,17 @@ export function EnkripsiPage() {
     <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] p-4 md:p-6">
       <div className="max-w-[1200px] mx-auto">
         <div className="mb-4 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-          <span className="text-[13px] text-[#64748B]">Pilih Algoritma:</span>
+          <span className="text-[13px] text-[#64748B]">Algoritma aktif:</span>
           <div className="flex rounded-[10px] border border-[#E2E8F0] overflow-hidden bg-white">
             <button
               onClick={() => {
                 setAlgorithm('DES');
                 resetProcessState();
               }}
-              className={`px-5 py-2.5 text-[13px] font-medium transition-all flex items-center gap-2 ${
-                algorithm === 'DES'
-                  ? 'bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white'
-                  : 'bg-white text-[#64748B] hover:bg-[#F8FAFC]'
-              }`}
+              className="px-5 py-2.5 text-[13px] font-medium transition-all flex items-center gap-2 bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white"
             >
               <Lock className="w-4 h-4" />
               DES (64-bit)
-            </button>
-            <button
-              onClick={() => {
-                setAlgorithm('ChaCha20');
-                resetProcessState();
-              }}
-              className={`px-5 py-2.5 text-[13px] font-medium transition-all flex items-center gap-2 border-l border-[#E2E8F0] ${
-                algorithm === 'ChaCha20'
-                  ? 'bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white'
-                  : 'bg-white text-[#64748B] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              <Zap className="w-4 h-4" />
-              ChaCha20 (256-bit)
             </button>
           </div>
         </div>
@@ -257,12 +197,8 @@ export function EnkripsiPage() {
                 }}
                 placeholder={
                   mode === 'encrypt'
-                    ? algorithm === 'DES'
-                      ? 'Masukkan plaintext tepat 8 byte...'
-                      : 'Masukkan plaintext...'
-                    : algorithm === 'DES'
-                    ? 'Masukkan ciphertext hex 16 karakter...'
-                    : 'Masukkan ciphertext hex...'
+                    ? 'Masukkan plaintext tepat 8 byte...'
+                    : 'Masukkan ciphertext hex 16 karakter...'
                 }
                 className="w-full px-3 py-2 border border-[#E2E8F0] rounded-[7px] text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB] resize-none"
                 rows={3}
@@ -291,47 +227,7 @@ export function EnkripsiPage() {
               </div>
             </div>
 
-            {algorithm === 'ChaCha20' && (
-              <>
-                <div className="mb-4">
-                  <label className="block text-[11px] text-[#64748B] mb-2">
-                    Nonce (12 byte)
-                  </label>
-                  <input
-                    type="text"
-                    value={nonce}
-                    onChange={(event) => {
-                      setNonce(event.target.value);
-                      resetProcessState();
-                    }}
-                    placeholder={noncePlaceholder}
-                    className="w-full px-3 py-2 border border-[#E2E8F0] rounded-[7px] text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                  />
-                  <div className="text-[10px] text-[#64748B] mt-1">
-                    {getByteLength(nonce)}/12 byte
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-[11px] text-[#64748B] mb-2">
-                    Counter (0 - 4294967295)
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={counter}
-                    onChange={(event) => {
-                      setCounter(event.target.value);
-                      resetProcessState();
-                    }}
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-[#E2E8F0] rounded-[7px] text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                  />
-                </div>
-              </>
-            )}
-
-            {(error || (!validation.isValid && (plaintext || key || nonce || counter !== '0'))) && (
+            {(error || (!validation.isValid && (plaintext || key))) && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-[8px] flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <p className="text-[12px] text-red-700">{error || validation.error}</p>
@@ -347,10 +243,8 @@ export function EnkripsiPage() {
             >
               {isProcessing ? (
                 <LoaderCircle className="w-4 h-4 animate-spin" />
-              ) : algorithm === 'DES' ? (
-                <Lock className="w-4 h-4" />
               ) : (
-                <Zap className="w-4 h-4" />
+                <Lock className="w-4 h-4" />
               )}
               {isProcessing ? 'Memproses...' : mode === 'encrypt' ? 'Enkripsi sekarang' : 'Dekripsi sekarang'}
             </button>
