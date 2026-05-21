@@ -191,6 +191,7 @@ function BitCell({
   changed,
   muted,
   title,
+  large,
 }: {
   bit: string;
   index: number;
@@ -198,6 +199,7 @@ function BitCell({
   changed?: boolean;
   muted?: boolean;
   title?: string;
+  large?: boolean;
 }) {
   const stateClass = changed
     ? 'border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_12px_rgba(245,158,11,0.22)]'
@@ -210,7 +212,7 @@ function BitCell({
   return (
     <div
       title={title ?? `Bit ${index + 1}`}
-      className={`flex h-6 w-6 items-center justify-center rounded-[6px] border font-mono text-[11px] font-semibold transition-colors ${
+      className={`flex ${large ? 'h-7 w-7 text-[12px]' : 'h-6 w-6 text-[11px]'} items-center justify-center rounded-[6px] border font-mono font-semibold transition-colors ${
         muted ? 'opacity-45' : ''
       } ${stateClass}`}
     >
@@ -225,23 +227,27 @@ function BitGrid({
   columns = 8,
   changedIndexes = [],
   activeIndexes = [],
+  note,
+  large = false,
 }: {
   bits: string;
   label: string;
   columns?: 6 | 8;
   changedIndexes?: number[];
   activeIndexes?: number[];
+  note?: string;
+  large?: boolean;
 }) {
   const changedSet = new Set(changedIndexes);
   const activeSet = new Set(activeIndexes);
 
   return (
-    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
+    <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${large ? 'p-4' : 'p-3'}`}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">{label}</div>
         <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{binaryToHex(bits)}</div>
       </div>
-      <div className={`grid gap-1 ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+      <div className={`grid ${large ? 'gap-1.5' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
         {bits.split('').map((bit, index) => (
           <BitCell
             key={`${label}-${index}`}
@@ -249,9 +255,15 @@ function BitGrid({
             index={index}
             changed={changedSet.has(index)}
             active={activeSet.has(index)}
+            large={large}
           />
         ))}
       </div>
+      {note && (
+        <div className="mt-3 rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-[11px] text-[#64748B]" style={{ lineHeight: 1.55 }}>
+          {note}
+        </div>
+      )}
     </div>
   );
 }
@@ -774,15 +786,36 @@ function OutputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType
   return (
     <>
       <div className="space-y-3">
-        <BitGrid bits={bits.leftInput} label={`${labels.leftIn} lama`} changedIndexes={changedIndexes} />
+        <BitGrid
+          bits={bits.leftInput}
+          label={`${labels.leftIn} lama`}
+          changedIndexes={changedIndexes}
+        />
+        <div className="flex justify-center">
+          <span className="rounded-full border border-[#FECDD3] bg-[#FFF1F2] px-3 py-1 font-mono text-[12px] font-semibold text-[#BE123C]">
+            XOR
+          </span>
+        </div>
         <BitGrid bits={bits.permutationOutput} label={`F(${labels.rightIn}, ${labels.subkey})`} changedIndexes={changedIndexes} />
-        <BitGrid bits={bits.rightInput} label={`${labels.rightIn} lama -> ${labels.leftOut}`} />
+        <div className="flex justify-center">
+          <span className="rounded-full border border-[#FECDD3] bg-[#FFF1F2] px-3 py-1 font-mono text-[12px] font-semibold text-[#BE123C]">
+            =
+          </span>
+        </div>
+        <BitGrid
+          bits={bits.rightOutput}
+          label={`${labels.rightOut} = ${labels.leftIn} XOR F`}
+          changedIndexes={changedIndexes}
+          note={`${labels.rightOut} tetap menjadi ${labels.rightOut} dan akan dipakai pada ronde berikutnya.`}
+          large
+        />
       </div>
       <div className="space-y-3">
-        <div className="grid gap-3 md:grid-cols-2">
-          <BitGrid bits={bits.leftOutput} label={`${labels.leftOut} = ${labels.rightIn}`} />
-          <BitGrid bits={bits.rightOutput} label={`${labels.rightOut} = ${labels.leftIn} XOR F`} changedIndexes={changedIndexes} />
-        </div>
+        <BitGrid
+          bits={bits.leftOutput}
+          label={`${labels.leftOut} = ${labels.rightIn}`}
+          note={`${labels.rightIn} di-swap menjadi ${labels.leftOut}. Nilai ${labels.leftOut} ini akan digunakan pada ronde berikutnya.`}
+        />
         <div className="rounded-[14px] border border-[#FECDD3] bg-white p-4">
           <div className="mb-3 text-[12px] font-semibold text-[#BE123C]">Formula ronde Feistel</div>
           <div className="grid gap-2 md:grid-cols-2">
