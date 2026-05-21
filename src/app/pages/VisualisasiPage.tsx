@@ -2012,8 +2012,8 @@ export function VisualisasiPage() {
               aria-label="Toggle Tutorial Mode"
             >
               <span
-                className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
-                  tutorialMode ? 'translate-x-8' : 'translate-x-1'
+                className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
+                  tutorialMode ? 'translate-x-8' : 'translate-x-0'
                 }`}
               />
             </button>

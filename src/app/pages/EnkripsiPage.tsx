@@ -271,6 +271,11 @@ export function EnkripsiPage() {
                 </button>
               )}
             </div>
+            {mode === 'encrypt' && (
+              <div className="-mt-3 mb-4 text-[11px] text-[#94A3B8]">
+                Format: Hexadecimal (setiap 2 karakter = 1 byte)
+              </div>
+            )}
 
             <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 mb-5">
               <div className="bg-[#F8FAFC] rounded-[8px] p-3">
