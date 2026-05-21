@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 
 const developers = [
   {
-    name: 'Almas Rifda Zatadin',
+    name: 'Almas Rifda Zatadin airin',
     badge: 'Ketua Anggota',
     badgeColor: '#2563EB',
     badgeBg: '#EFF6FF',
