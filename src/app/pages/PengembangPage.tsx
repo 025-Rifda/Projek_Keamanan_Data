@@ -83,22 +83,12 @@ export function PengembangPage() {
           opacity: 0.18;
           pointer-events: none;
         }
+
         .blob-1 { width: 90px; height: 90px; background: #BFDBFE; top: 30px; left: 6%; }
         .blob-2 { width: 56px; height: 56px; background: #C7D2FE; top: 80px; left: 12%; opacity: 0.12; }
         .blob-3 { width: 70px; height: 70px; background: #A5B4FC; top: 20px; right: 8%; opacity: 0.15; }
 
-        .hex-deco {
-          position: absolute;
-          right: 4%;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 96px;
-          height: 96px;
-          opacity: 0.22;
-        }
-
-        .dot-grid,
-        .dot-grid-right {
+        .dot-grid, .dot-grid-right {
           position: absolute;
           top: 24px;
           width: 80px;
@@ -126,10 +116,8 @@ export function PengembangPage() {
           font-size: 12px;
           font-weight: 600;
           color: #2563EB;
-          letter-spacing: 0.04em;
           margin-bottom: 20px;
           backdrop-filter: blur(6px);
-          position: relative;
           z-index: 2;
         }
 
@@ -139,9 +127,9 @@ export function PengembangPage() {
           color: #0F172A;
           margin: 0 0 14px;
           line-height: 1.2;
-          position: relative;
           z-index: 2;
         }
+
         .hero-title span {
           background: linear-gradient(135deg, #2563EB, #4F46E5);
           -webkit-background-clip: text;
@@ -154,7 +142,6 @@ export function PengembangPage() {
           max-width: 560px;
           margin: 0 auto 36px;
           line-height: 1.75;
-          position: relative;
           z-index: 2;
         }
 
@@ -165,30 +152,32 @@ export function PengembangPage() {
           gap: 10px;
           max-width: 780px;
           margin: 0 auto;
-          position: relative;
           z-index: 2;
         }
+
         .stat-item {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 12px 20px;
-          background: #fff;
+          background: white;
           border: 1px solid #E2E8F0;
           border-radius: 12px;
-          box-shadow: 0 1px 6px rgba(37,99,235,0.06);
           min-width: 140px;
           flex: 1;
         }
+
         .stat-icon {
-          width: 34px; height: 34px;
-          border-radius: 9px;
+          width: 34px;
+          height: 34px;
           background: #EEF2FF;
+          border-radius: 9px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #2563EB;
         }
+
         .stat-value {
           font-size: 16px;
           font-weight: 700;
@@ -196,10 +185,10 @@ export function PengembangPage() {
           line-height: 1;
           font-family: 'IBM Plex Mono', monospace;
         }
+
         .stat-label {
           font-size: 11px;
           color: #94A3B8;
-          margin-top: 2px;
         }
 
         .dev-grid {
@@ -212,48 +201,66 @@ export function PengembangPage() {
         }
 
         .dev-card {
-          background: #fff;
+          background: white;
           border: 1px solid #E2E8F0;
           border-radius: 18px;
           padding: 22px;
           display: flex;
           gap: 18px;
           position: relative;
-          box-shadow: 0 2px 12px rgba(37,99,235,0.05);
-          transition: transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 2px 12px rgba(37, 99, 235, 0.05);
+          transition: 0.2s;
         }
+
         .dev-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 12px 36px rgba(37,99,235,0.12);
+          box-shadow: 0 12px 36px rgba(37, 99, 235, 0.12);
           border-color: #BFDBFE;
         }
 
         .card-dots {
           position: absolute;
-          top: 14px; right: 14px;
+          top: 14px;
+          right: 14px;
           display: grid;
           grid-template-columns: repeat(3, 4px);
           gap: 3px;
           opacity: 0.25;
         }
+
         .card-dots span {
-          width: 4px; height: 4px;
-          border-radius: 50%;
+          width: 4px;
+          height: 4px;
           background: #94A3B8;
+          border-radius: 50%;
         }
 
         .dev-photo {
-          width: 100px; height: 100px;
+          width: 100px;
+          height: 100px;
           border-radius: 16px;
           overflow: hidden;
           background: linear-gradient(135deg, #DBEAFE, #E0E7FF);
           border: 2px solid #BFDBFE;
           box-shadow: 0 4px 12px rgba(37,99,235,0.12);
         }
-        .dev-photo img { width: 100%; height: 100%; object-fit: cover; }
 
-        .dev-info { flex: 1; }
-        .dev-name { font-size: 16px; font-weight: 700; color: #0F172A; }
+        .dev-photo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .dev-info {
+          flex: 1;
+        }
+
+        .dev-name {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+
         .dev-badge {
           display: inline-flex;
           align-items: center;
@@ -264,6 +271,7 @@ export function PengembangPage() {
           font-weight: 600;
           margin: 6px 0 10px;
         }
+
         .dev-desc {
           font-size: 12.5px;
           color: #64748B;
@@ -271,29 +279,53 @@ export function PengembangPage() {
           margin-bottom: 14px;
         }
 
-        .social-links { display: flex; gap: 8px; }
+        .social-links {
+          display: flex;
+          gap: 8px;
+        }
+
         .social-btn {
-          width: 34px; height: 34px;
+          width: 34px;
+          height: 34px;
           border-radius: 9px;
           background: #F8FAFC;
           border: 1px solid #E2E8F0;
-          display: flex; align-items: center; justify-content: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: #64748B;
           transition: 0.15s;
         }
-        .social-btn:hover { transform: translateY(-1px); }
-        .social-btn.github:hover { background: #0F172A; border-color: #0F172A; color: white; }
+
+        .social-btn:hover {
+          transform: translateY(-1px);
+        }
+
+        .social-btn.github:hover {
+          background: #0F172A;
+          border-color: #0F172A;
+          color: white;
+        }
+
         .social-btn.instagram:hover {
           background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
           color: white;
         }
-        .social-btn.email:hover { background: #EA4335; border-color: #EA4335; color: white; }
 
-        .about-section { padding: 0 24px 52px; }
+        .social-btn.email:hover {
+          background: #EA4335;
+          border-color: #EA4335;
+          color: white;
+        }
+
+        .about-section {
+          padding: 0 24px 52px;
+        }
+
         .about-card {
           max-width: 1120px;
           margin: 0 auto;
-          background: #fff;
+          background: white;
           border: 1px solid #E2E8F0;
           border-radius: 20px;
           padding: 28px 32px;
@@ -302,7 +334,8 @@ export function PengembangPage() {
         }
 
         .about-icon-bg {
-          width: 80px; height: 80px;
+          width: 80px;
+          height: 80px;
           border-radius: 18px;
           background: linear-gradient(135deg, #EEF2FF, #DBEAFE);
           border: 1.5px solid #C7D2FE;
@@ -318,11 +351,13 @@ export function PengembangPage() {
           color: #0F172A;
           margin-bottom: 10px;
         }
+
         .about-desc {
           font-size: 13.5px;
           color: #475569;
           line-height: 1.75;
         }
+
         .about-note {
           display: inline-flex;
           align-items: center;
@@ -355,12 +390,13 @@ export function PengembangPage() {
           color: #94A3B8;
           padding: 20px 0 32px;
         }
-        .heart { color: #F43F5E; }
+
+        .heart {
+          color: #F43F5E;
+        }
       `}</style>
 
       <div className="pengembang-page">
-
-        {/* Hero Section */}
         <section className="hero-section">
           <div className="blob blob-1" />
           <div className="blob blob-2" />
@@ -395,7 +431,6 @@ export function PengembangPage() {
           </motion.div>
         </section>
 
-        {/* Developer Cards */}
         <div className="dev-grid">
           {developers.map((dev, index) => (
             <motion.div
@@ -420,7 +455,7 @@ export function PengembangPage() {
                   style={{
                     color: dev.badgeColor,
                     background: dev.badgeBg,
-                    borderColor: dev.badgeColor + '33'
+                    borderColor: dev.badgeColor + '33',
                   }}
                 >
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: dev.badgeColor }} />
@@ -430,28 +465,34 @@ export function PengembangPage() {
                 <p className="dev-desc">{dev.description}</p>
 
                 <div className="social-links">
-                  <a href={dev.github} className="social-btn github"><Github size={15} /></a>
-                  <a href={dev.instagram} className="social-btn instagram"><Instagram size={15} /></a>
-                  <a href={`mailto:${dev.email}`} className="social-btn email"><Mail size={15} /></a>
+                  <a href={dev.github} className="social-btn github">
+                    <Github size={15} />
+                  </a>
+                  <a href={dev.instagram} className="social-btn instagram">
+                    <Instagram size={15} />
+                  </a>
+                  <a href={`mailto:${dev.email}`} className="social-btn email">
+                    <Mail size={15} />
+                  </a>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* About Section */}
         <section className="about-section">
           <div className="about-card">
             <div className="about-icon-bg">
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <rect x="6" y="6" width="24" height="24" rx="5" fill="#2563EB" opacity="0.2" />
                 <rect x="10" y="10" width="16" height="16" rx="3" fill="#2563EB" opacity="0.35" />
-                <path d="M18 13L18 23M13 18L23 18" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M18 13V23M13 18h10" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" />
               </svg>
             </div>
 
             <div>
               <div className="about-title">Tentang Proyek</div>
+
               <p className="about-desc">
                 CryptoDES adalah platform edukasi kriptografi untuk memahami algoritma enkripsi DES melalui
                 visualisasi interaktif serta penjelasan yang mudah dipahami.
@@ -469,11 +510,9 @@ export function PengembangPage() {
           </div>
         </section>
 
-        {/* Footer */}
         <div className="footer-note">
           <span className="heart">♥</span> Dibuat dengan semangat untuk pendidikan.
         </div>
-
       </div>
     </>
   );
