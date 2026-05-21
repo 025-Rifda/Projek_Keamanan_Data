@@ -1179,7 +1179,7 @@ function Step3StoryVisual({
             <div className="text-[18px] font-semibold text-[#0F172A]">Hasil PC-1: key 56 bit</div>
             <p className="mt-1 text-[13px] text-[#64748B]">Ini adalah bahan baru yang akan dibelah menjadi dua setengah bagian.</p>
           </div>
-          <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="slate" animated />
+          <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="blue" animated />
         </StoryCard>
       );
     }
@@ -1193,7 +1193,7 @@ function Step3StoryVisual({
           </div>
           <div className="relative mb-4 rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
             <div className="absolute bottom-4 left-1/2 top-4 w-px bg-[#CBD5E1]" />
-            <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="slate" />
+            <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="blue" />
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.45 }} className="rounded-[16px] border border-[#DDD6FE] bg-[#F5F3FF] p-4">
