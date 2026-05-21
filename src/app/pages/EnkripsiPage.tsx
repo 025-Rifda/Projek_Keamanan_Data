@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Pencil, FileText, Copy, Eye, AlertCircle, LoaderCircle } from 'lucide-react';
+import { Lock, Pencil, FileText, Copy, Eye, AlertCircle, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAlgorithm } from '../context/AlgorithmContext';
 import { decryptDES, encryptDES } from '../utils/des';
@@ -35,6 +35,7 @@ export function EnkripsiPage() {
   const [outputLength, setOutputLength] = useState(0);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -124,189 +125,529 @@ export function EnkripsiPage() {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleVisualize = () => {
     if (!canOpenVisualization) {
       return;
     }
-
     navigate('/visualisasi');
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] p-4 md:p-6">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="mb-4 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-          <span className="text-[13px] text-[#64748B]">Algoritma aktif:</span>
-          <div className="flex rounded-[10px] border border-[#E2E8F0] overflow-hidden bg-white">
-            <button
-              onClick={() => {
-                setAlgorithm('DES');
-                resetProcessState();
-              }}
-              className="px-5 py-2.5 text-[13px] font-medium transition-all flex items-center gap-2 bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white"
-            >
-              <Lock className="w-4 h-4" />
-              DES (64-bit)
-            </button>
-          </div>
-        </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap');
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-5">
-            <div className="flex items-center gap-2 mb-5">
-              <Pencil className="w-4 h-4 text-[#64748B]" />
-              <h2 className="text-[14px] font-medium text-[#0F172A]">Input</h2>
+        .enkripsi-page * {
+          font-family: 'Sora', sans-serif;
+        }
+        .enkripsi-page .font-mono {
+          font-family: 'IBM Plex Mono', monospace !important;
+        }
+
+        .enkripsi-page {
+          background: #F0F4FF;
+          background-image:
+            radial-gradient(ellipse at 20% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
+          min-height: calc(100vh - 56px);
+        }
+
+        .card {
+          background: #fff;
+          border: 1px solid #E2E8F0;
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(37,99,235,0.06), 0 1px 2px rgba(0,0,0,0.04);
+          transition: box-shadow 0.2s;
+        }
+        .card:hover {
+          box-shadow: 0 6px 24px rgba(37,99,235,0.10), 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .algo-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 18px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          box-shadow: 0 4px 14px rgba(37,99,235,0.30);
+        }
+
+        .mode-toggle {
+          display: flex;
+          border-radius: 10px;
+          border: 1.5px solid #E2E8F0;
+          overflow: hidden;
+          background: #F8FAFC;
+        }
+        .mode-btn {
+          flex: 1;
+          padding: 9px 0;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          border: none;
+          background: transparent;
+          color: #64748B;
+          transition: all 0.18s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          font-family: 'Sora', sans-serif;
+        }
+        .mode-btn.active {
+          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          color: #fff;
+          box-shadow: 0 2px 8px rgba(37,99,235,0.18);
+        }
+        .mode-btn:not(.active):hover {
+          background: #EEF2FF;
+          color: #2563EB;
+        }
+
+        .field-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #64748B;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          display: block;
+        }
+
+        .text-input, .key-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1.5px solid #E2E8F0;
+          border-radius: 9px;
+          font-size: 13px;
+          font-family: 'IBM Plex Mono', monospace !important;
+          background: #FAFBFF;
+          color: #0F172A;
+          outline: none;
+          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+          box-sizing: border-box;
+        }
+        .text-input:focus, .key-input:focus {
+          border-color: #2563EB;
+          box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+          background: #fff;
+        }
+        .text-input {
+          resize: none;
+        }
+
+        .byte-hint {
+          font-size: 10px;
+          color: #94A3B8;
+          margin-top: 5px;
+          font-family: 'IBM Plex Mono', monospace;
+        }
+        .byte-hint span {
+          color: #2563EB;
+          font-weight: 600;
+        }
+
+        .process-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          border: none;
+          cursor: pointer;
+          letter-spacing: 0.01em;
+          box-shadow: 0 4px 16px rgba(37,99,235,0.28);
+          transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+          font-family: 'Sora', sans-serif;
+        }
+        .process-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+        }
+        .process-btn:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .process-btn:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+
+        .result-box {
+          background: linear-gradient(135deg, #F0F7FF 0%, #EEF2FF 100%);
+          border: 1.5px solid #BFDBFE;
+          border-radius: 10px;
+          padding: 14px;
+          min-height: 96px;
+          position: relative;
+        }
+        .result-box pre {
+          font-size: 13px;
+          font-family: 'IBM Plex Mono', monospace;
+          color: #1D4ED8;
+          white-space: pre-wrap;
+          word-break: break-all;
+          margin: 0;
+          line-height: 1.6;
+        }
+        .result-box .empty-text {
+          color: #93C5FD;
+          font-size: 13px;
+          font-family: 'IBM Plex Mono', monospace;
+          font-style: italic;
+        }
+
+        .copy-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          padding: 5px 8px;
+          border-radius: 6px;
+          border: 1px solid #BFDBFE;
+          background: #fff;
+          color: #2563EB;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 500;
+          transition: all 0.15s;
+          font-family: 'Sora', sans-serif;
+        }
+        .copy-btn:hover {
+          background: #EFF6FF;
+          border-color: #93C5FD;
+        }
+
+        .stat-card {
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
+          border-radius: 10px;
+          padding: 14px 16px;
+          flex: 1;
+        }
+        .stat-card .stat-label {
+          font-size: 10px;
+          font-weight: 600;
+          color: #94A3B8;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 4px;
+        }
+        .stat-card .stat-value {
+          font-size: 26px;
+          font-weight: 700;
+          color: #0F172A;
+          line-height: 1;
+          font-family: 'IBM Plex Mono', monospace;
+        }
+        .stat-card .stat-unit {
+          font-size: 10px;
+          color: #94A3B8;
+          margin-top: 3px;
+          font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .visualize-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 11px;
+          border-radius: 10px;
+          border: 1.5px solid #E2E8F0;
+          background: transparent;
+          color: #334155;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s;
+          font-family: 'Sora', sans-serif;
+        }
+        .visualize-btn:hover:not(:disabled) {
+          background: #EEF2FF;
+          border-color: #C7D2FE;
+          color: #2563EB;
+        }
+        .visualize-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .error-box {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 10px 12px;
+          background: #FEF2F2;
+          border: 1px solid #FECACA;
+          border-radius: 8px;
+          margin-bottom: 14px;
+        }
+        .error-box p {
+          font-size: 12px;
+          color: #B91C1C;
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        .section-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+        .section-header .icon-wrap {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: #EEF2FF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #2563EB;
+          flex-shrink: 0;
+        }
+        .section-header h2 {
+          font-size: 15px;
+          font-weight: 600;
+          color: #0F172A;
+          margin: 0;
+        }
+
+        .format-hint {
+          font-size: 11px;
+          color: #94A3B8;
+          margin-top: -10px;
+          margin-bottom: 16px;
+          padding-left: 2px;
+        }
+
+        .no-viz-note {
+          border-radius: 10px;
+          border: 1px dashed #CBD5E1;
+          background: #F8FAFC;
+          padding: 12px 14px;
+          font-size: 12px;
+          color: #94A3B8;
+          line-height: 1.6;
+          text-align: center;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+          animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .spin {
+          animation: spin 0.8s linear infinite;
+        }
+      `}</style>
+
+      <div className="enkripsi-page" style={{ padding: '28px 16px' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Algoritma aktif</span>
             </div>
-
-            <div className="flex rounded-[8px] border border-[#E2E8F0] mb-5 overflow-hidden">
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <button
-                onClick={() => {
-                  setMode('encrypt');
-                  resetProcessState();
-                }}
-                className={`flex-1 py-2 text-[13px] font-medium transition-colors ${
-                  mode === 'encrypt' ? 'bg-[#2563EB] text-white' : 'bg-transparent text-[#64748B]'
-                }`}
+                onClick={() => { setAlgorithm('DES'); resetProcessState(); }}
+                className="algo-badge"
               >
-                Enkripsi
-              </button>
-              <button
-                onClick={() => {
-                  setMode('decrypt');
-                  resetProcessState();
-                }}
-                className={`flex-1 py-2 text-[13px] font-medium transition-colors ${
-                  mode === 'decrypt' ? 'bg-[#2563EB] text-white' : 'bg-transparent text-[#64748B]'
-                }`}
-              >
-                Dekripsi
+                <Lock size={14} />
+                DES (64-bit)
               </button>
             </div>
-
-            <div className="mb-4">
-              <label className="block text-[11px] text-[#64748B] mb-2">
-                {mode === 'encrypt' ? 'Plaintext' : 'Ciphertext'}
-              </label>
-              <textarea
-                value={plaintext}
-                onChange={(event) => {
-                  setPlaintext(event.target.value);
-                  resetProcessState();
-                }}
-                placeholder={
-                  mode === 'encrypt'
-                    ? 'Masukkan plaintext tepat 8 byte...'
-                    : 'Masukkan ciphertext hex 16 karakter...'
-                }
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-[7px] text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB] resize-none"
-                rows={3}
-              />
-              <div className="text-[10px] text-[#64748B] mt-1">
-                {mode === 'encrypt' ? `${getByteLength(plaintext)} byte` : `${normalizedInput.length} karakter`}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-[11px] text-[#64748B] mb-2">
-                Key ({keyLength} byte)
-              </label>
-              <input
-                type="text"
-                value={key}
-                onChange={(event) => {
-                  setKey(event.target.value);
-                  resetProcessState();
-                }}
-                placeholder={keyPlaceholder}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-[7px] text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-              />
-              <div className="text-[10px] text-[#64748B] mt-1">
-                {getByteLength(key)}/{keyLength} byte
-              </div>
-            </div>
-
-            {(error || (!validation.isValid && (plaintext || key))) && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-[8px] flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-700">{error || validation.error}</p>
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                void handleProcess();
-              }}
-              disabled={isProcessing}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[8px] bg-gradient-to-r from-[#2563EB] to-[#3B82F6] text-white text-[13px] font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isProcessing ? (
-                <LoaderCircle className="w-4 h-4 animate-spin" />
-              ) : (
-                <Lock className="w-4 h-4" />
-              )}
-              {isProcessing ? 'Memproses...' : mode === 'encrypt' ? 'Enkripsi sekarang' : 'Dekripsi sekarang'}
-            </button>
           </div>
 
-          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-5">
-            <div className="flex items-center gap-2 mb-5">
-              <FileText className="w-4 h-4 text-[#64748B]" />
-              <h2 className="text-[14px] font-medium text-[#0F172A]">
-                Hasil {mode === 'encrypt' ? 'Enkripsi' : 'Dekripsi'}
-              </h2>
-            </div>
+          {/* Main grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
 
-            <div className="bg-[#F8FAFF] border border-[#BFDBFE] rounded-[8px] p-3 mb-4 min-h-[112px] relative">
-              <pre className="text-[12px] font-mono text-[#1D4ED8] whitespace-pre-wrap break-all">
-                {result || emptyStateText}
-              </pre>
-              {result && (
+            {/* Input card */}
+            <div className="card animate-in" style={{ padding: '24px' }}>
+              <div className="section-header">
+                <div className="icon-wrap">
+                  <Pencil size={15} />
+                </div>
+                <h2>Input</h2>
+              </div>
+
+              {/* Mode toggle */}
+              <div className="mode-toggle" style={{ marginBottom: 22 }}>
                 <button
-                  onClick={handleCopy}
-                  className="absolute top-2 right-2 px-2 py-1 text-[11px] text-[#64748B] hover:text-[#0F172A] transition-colors"
+                  className={`mode-btn ${mode === 'encrypt' ? 'active' : ''}`}
+                  onClick={() => { setMode('encrypt'); resetProcessState(); }}
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Lock size={13} />
+                  Enkripsi
                 </button>
+                <button
+                  className={`mode-btn ${mode === 'decrypt' ? 'active' : ''}`}
+                  onClick={() => { setMode('decrypt'); resetProcessState(); }}
+                >
+                  <ShieldCheck size={13} />
+                  Dekripsi
+                </button>
+              </div>
+
+              {/* Plaintext / Ciphertext input */}
+              <div style={{ marginBottom: 18 }}>
+                <label className="field-label">
+                  {mode === 'encrypt' ? 'Plaintext' : 'Ciphertext'}
+                </label>
+                <textarea
+                  value={plaintext}
+                  onChange={(e) => { setPlaintext(e.target.value); resetProcessState(); }}
+                  placeholder={
+                    mode === 'encrypt'
+                      ? 'Masukkan plaintext tepat 8 byte...'
+                      : 'Masukkan ciphertext hex 16 karakter...'
+                  }
+                  className="text-input font-mono"
+                  rows={3}
+                />
+                <div className="byte-hint">
+                  {mode === 'encrypt'
+                    ? <><span>{getByteLength(plaintext)}</span> / 8 byte</>
+                    : <><span>{normalizedInput.length}</span> karakter</>
+                  }
+                </div>
+              </div>
+
+              {/* Key input */}
+              <div style={{ marginBottom: 18 }}>
+                <label className="field-label">
+                  Kunci ({keyLength} byte / 64-bit)
+                </label>
+                <input
+                  type="text"
+                  value={key}
+                  onChange={(e) => { setKey(e.target.value); resetProcessState(); }}
+                  placeholder={keyPlaceholder}
+                  className="key-input font-mono"
+                />
+                <div className="byte-hint">
+                  <span>{getByteLength(key)}</span> / {keyLength} byte
+                </div>
+              </div>
+
+              {/* Error */}
+              {(error || (!validation.isValid && (plaintext || key))) && (
+                <div className="error-box">
+                  <AlertCircle size={15} color="#EF4444" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p>{error || validation.error}</p>
+                </div>
+              )}
+
+              {/* Process button */}
+              <button
+                className="process-btn"
+                onClick={() => { void handleProcess(); }}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <LoaderCircle size={15} className="spin" />
+                ) : (
+                  <Lock size={15} />
+                )}
+                {isProcessing
+                  ? 'Memproses...'
+                  : mode === 'encrypt' ? 'Enkripsi Sekarang' : 'Dekripsi Sekarang'
+                }
+              </button>
+            </div>
+
+            {/* Output card */}
+            <div className="card animate-in" style={{ padding: '24px', animationDelay: '0.06s' }}>
+              <div className="section-header">
+                <div className="icon-wrap">
+                  <FileText size={15} />
+                </div>
+                <h2>Hasil {mode === 'encrypt' ? 'Enkripsi' : 'Dekripsi'}</h2>
+              </div>
+
+              {/* Result display */}
+              <div className="result-box" style={{ marginBottom: 8 }}>
+                {result ? (
+                  <>
+                    <pre>{result}</pre>
+                    <button className="copy-btn" onClick={handleCopy}>
+                      <Copy size={12} />
+                      {copied ? 'Disalin!' : 'Salin'}
+                    </button>
+                  </>
+                ) : (
+                  <span className="empty-text">{emptyStateText}</span>
+                )}
+              </div>
+
+              {mode === 'encrypt' && (
+                <div className="format-hint">
+                  Format: Hexadecimal — setiap 2 karakter = 1 byte
+                </div>
+              )}
+
+              {/* Stats */}
+              <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                <div className="stat-card">
+                  <div className="stat-label">Panjang Input</div>
+                  <div className="stat-value">{inputLength}</div>
+                  <div className="stat-unit">byte</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Panjang Output</div>
+                  <div className="stat-value">{outputLength}</div>
+                  <div className="stat-unit">byte</div>
+                </div>
+              </div>
+
+              {/* Visualize / note */}
+              {mode === 'encrypt' ? (
+                <button
+                  className="visualize-btn"
+                  onClick={handleVisualize}
+                  disabled={!canOpenVisualization}
+                >
+                  <Eye size={15} />
+                  Lihat Visualisasi Proses
+                </button>
+              ) : (
+                <div className="no-viz-note">
+                  Dekripsi ditampilkan sebagai input dan output normal —<br />
+                  visualisasi langkah internal tidak tersedia.
+                </div>
               )}
             </div>
-            {mode === 'encrypt' && (
-              <div className="-mt-3 mb-4 text-[11px] text-[#94A3B8]">
-                Format: Hexadecimal (setiap 2 karakter = 1 byte)
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 mb-5">
-              <div className="bg-[#F8FAFC] rounded-[8px] p-3">
-                <div className="text-[11px] text-[#64748B] mb-1">Panjang input</div>
-                <div className="text-[18px] font-medium text-[#0F172A]">{inputLength}</div>
-                <div className="text-[10px] text-[#94A3B8]">byte</div>
-              </div>
-              <div className="bg-[#F8FAFC] rounded-[8px] p-3">
-                <div className="text-[11px] text-[#64748B] mb-1">Panjang output</div>
-                <div className="text-[18px] font-medium text-[#0F172A]">{outputLength}</div>
-                <div className="text-[10px] text-[#94A3B8]">byte</div>
-              </div>
-            </div>
-
-            {mode === 'encrypt' ? (
-              <button
-                onClick={handleVisualize}
-                disabled={!canOpenVisualization}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[8px] border border-[#E2E8F0] bg-transparent text-[#0F172A] text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Eye className="w-4 h-4" />
-                Lihat visualisasi proses
-              </button>
-            ) : (
-              <div className="rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
-                Dekripsi ditampilkan sebagai input dan output normal tanpa visualisasi langkah internal.
-              </div>
-            )}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
