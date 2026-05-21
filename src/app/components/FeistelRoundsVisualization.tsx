@@ -258,6 +258,13 @@ function BitGrid({
 
 function FeistelDiagram({ round }: { round: FeistelRoundData }) {
   const labels = getLabels(round);
+  const readingSteps = [
+    `Mulai dari ${labels.leftIn} (kiri atas) dan ${labels.rightIn} (kanan atas).`,
+    `${labels.rightIn} masuk ke Function F bersama subkey ${labels.subkey}.`,
+    `Hasil Function F di-XOR dengan ${labels.leftIn}.`,
+    `Hasil XOR menjadi ${labels.rightOut} (output kanan).`,
+    `${labels.leftOut} langsung mengambil nilai ${labels.rightIn} tanpa perubahan.`,
+  ];
 
   return (
     <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-4">
@@ -286,9 +293,19 @@ function FeistelDiagram({ round }: { round: FeistelRoundData }) {
         <path d="M248 131 C305 131 315 212 375 212" stroke="#2563EB" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
         <path d="M430 72 C430 118 90 130 90 190" stroke="#16A34A" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
       </svg>
-      <p className="mt-2 text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
-        {labels.leftOut} langsung mengambil nilai {labels.rightIn}. Sementara itu, {labels.rightIn} masuk ke Function F, hasilnya di-XOR dengan {labels.leftIn}, lalu menjadi {labels.rightOut}.
-      </p>
+      <div className="mt-3 rounded-[12px] border border-[#BFDBFE] bg-white px-3 py-3">
+        <div className="mb-2 text-[12px] font-semibold text-[#1D4ED8]">Cara membaca diagram</div>
+        <div className="space-y-1.5">
+          {readingSteps.map((step, index) => (
+            <div key={step} className="flex gap-2 text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.55 }}>
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] font-mono text-[10px] font-semibold ring-1 ring-[#BFDBFE]">
+                {index + 1}
+              </span>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -496,17 +513,41 @@ function SBoxTable({
 
 function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
   const labels = getLabels(round);
+  const inputIndex = round.round - 1;
+  const originNotes = inputIndex === 0
+    ? {
+        left: `${labels.leftIn} ini berasal dari 32 bit kiri hasil Initial Permutation (Langkah 2).`,
+        right: `${labels.rightIn} ini berasal dari 32 bit kanan hasil Initial Permutation (Langkah 2).`,
+      }
+    : {
+        left: `${labels.leftIn} ini berasal dari output kiri ronde ${inputIndex}, yaitu nilai R${inputIndex - 1} yang disalin tanpa perubahan.`,
+        right: `${labels.rightIn} ini berasal dari output kanan ronde ${inputIndex}, yaitu hasil L${inputIndex - 1} di-XOR dengan output Function F(R${inputIndex - 1}, K${inputIndex}).`,
+      };
+  const flowRows = [
+    `${labels.rightIn} masuk ke Function F - ${labels.rightIn} adalah 32 bit kanan input ronde ${round.round}. Nilainya diproses bersama ${labels.subkey}, subkey ronde ${round.round} dari Key Schedule.`,
+    `Function F memakai ${labels.subkey} - ${labels.subkey} adalah satu dari 16 subkey yang dihasilkan. Function F melakukan Expansion, XOR dengan subkey, S-Box substitution, dan Permutation.`,
+    `${labels.leftIn} di-XOR dengan output Function F - hasil XOR ini menjadi ${labels.rightOut} (sisi kanan ronde berikutnya). Sementara ${labels.leftOut} langsung diisi dengan nilai ${labels.rightIn}.`,
+  ];
 
   return (
     <>
       <div className="space-y-3">
         <FeistelDiagram round={round} />
-        <BitGrid bits={bits.leftInput} label={`${labels.leftIn} - sisi kiri (32 bit)`} />
-        <BitGrid bits={bits.rightInput} label={`${labels.rightIn} - sisi kanan (32 bit)`} />
+        <div className="space-y-1.5">
+          <BitGrid bits={bits.leftInput} label={`${labels.leftIn} - sisi kiri (32 bit)`} />
+          <div className="rounded-[9px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-[11px] text-[#1D4ED8]">
+            {originNotes.left}
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <BitGrid bits={bits.rightInput} label={`${labels.rightIn} - sisi kanan (32 bit)`} />
+          <div className="rounded-[9px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[11px] text-[#15803D]">
+            {originNotes.right}
+          </div>
+        </div>
       </div>
       <div className="space-y-3">
-        <FlowCard title={`Alur ronde ${round.round}`} rows={[`${labels.rightIn} masuk ke Function F`, `Function F memakai ${labels.subkey}`, `${labels.leftIn} menunggu untuk XOR akhir`]} />
-        <InfoBox step={roundSteps[0]} />
+        <FlowCard title={`Alur ronde ${round.round}`} rows={flowRows} />
       </div>
     </>
   );
