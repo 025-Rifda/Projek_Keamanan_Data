@@ -615,75 +615,135 @@ function XorStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<ty
   );
 }
 
+function SBoxOutputGrid({ outputs }: { outputs: string[] }) {
+  const outputBits = Array.from({ length: 8 }, (_, index) => outputs[index] ?? '0000').join('');
+  const outputHex = binaryToHex(outputBits);
+
+  return (
+    <div className="rounded-[16px] border border-[#DDD6FE] bg-white p-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#5B21B6]">Output gabungan S-Box (32 bit)</div>
+          <div className="mt-1 text-[12px] text-[#6D28D9]">Delapan output 4-bit dari S1 sampai S8 digabung berurutan menjadi 32 bit.</div>
+        </div>
+        <div className="w-fit rounded-[9px] border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-2 font-mono text-[12px] font-semibold text-[#5B21B6]">
+          HEX {outputHex}
+        </div>
+      </div>
+      <div className="grid grid-cols-8 gap-1.5">
+        {outputBits.split('').map((bit, index) => (
+          <div
+            key={`sbox-output-bit-${index}`}
+            title={`Bit ${index + 1}`}
+            className="flex h-9 items-center justify-center rounded-[7px] border border-[#C4B5FD] bg-[#EDE9FE] font-mono text-[14px] font-semibold text-[#5B21B6]"
+          >
+            {bit}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
   const [activeBox, setActiveBox] = useState(0);
   const chunks = bits.xorWithKey.match(/.{1,6}/g) ?? [];
   const outputs = bits.sboxOutput.match(/.{1,4}/g) ?? [];
+  const sboxIndexes = Array.from({ length: 8 }, (_, index) => index);
 
   useEffect(() => {
     setActiveBox(0);
   }, [bits.xorWithKey]);
 
   return (
-    <>
+    <div className="space-y-4 xl:col-span-2">
+      <div className="rounded-[14px] border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3">
+        <div className="mb-2 text-[12px] font-semibold text-[#5B21B6]">Cara membaca S-Box</div>
+        <p className="text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
+          S-Box adalah jantung non-linearitas DES. Input 6 bit menjadi output 4 bit: bit pertama dan terakhir memilih baris (0-3), empat bit tengah memilih kolom (0-15), lalu hasil diambil dari perpotongan baris dan kolom.
+        </p>
+        <p className="mt-2 text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
+          S-Box sengaja dibuat non-linear, tidak ada rumus sederhana untuk menebak outputnya. Inilah yang membuat DES lebih sulit dipecah secara analitik.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {sboxIndexes.map((index) => {
+          const chunk = chunks[index] ?? '000000';
+          const output = outputs[index] ?? '0000';
+          const active = index === activeBox;
+          const row = parseInt(`${chunk[0]}${chunk[5]}`, 2);
+          const column = parseInt(chunk.slice(1, 5), 2);
+          const chars = chunk.split('');
+
+          return (
+            <button
+              key={`sbox-card-${index}`}
+              type="button"
+              onClick={() => setActiveBox(index)}
+              className={`flex min-h-[164px] flex-col gap-3 rounded-[12px] border p-4 text-left transition-colors ${
+                active ? 'border-[#7C3AED] bg-[#F5F3FF] shadow-[0_0_0_3px_rgba(221,214,254,0.9)]' : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]'
+              }`}
+            >
+              <div className="text-[13px] font-semibold text-[#5B21B6]">S{index + 1}</div>
+              <div className="grid grid-cols-6 gap-1 font-mono text-[13px] font-semibold">
+                {chars.map((bit, bitIndex) => (
+                  <motion.span
+                    key={`sbox-card-${index}-${bitIndex}`}
+                    animate={active && (bitIndex === 0 || bitIndex === 5) ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
+                    className={`flex h-8 items-center justify-center rounded-[6px] ${
+                      bitIndex === 0 || bitIndex === 5
+                        ? 'bg-[#FEF3C7] text-[#92400E]'
+                        : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
+                    }`}
+                  >
+                    {bit}
+                  </motion.span>
+                ))}
+              </div>
+              <div className="text-[11px] text-[#64748B]">baris {row}, kolom {column}</div>
+              <div className="mt-auto rounded-[9px] bg-white px-3 py-2 ring-1 ring-[#DDD6FE]">
+                <div className="text-[10px] font-semibold text-[#64748B]">Output 4 bit</div>
+                <div className="mt-1 grid grid-cols-4 gap-1 font-mono text-[12px] font-semibold text-[#6D28D9]">
+                  {output.split('').map((bit, bitIndex) => (
+                    <span key={`sbox-card-output-${index}-${bitIndex}`} className="rounded-[5px] bg-[#F5F3FF] px-2 py-1 text-center">
+                      {bit}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <SBoxOutputGrid outputs={outputs} />
+
       <div className="space-y-3">
-        <div className="rounded-[14px] border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3">
-          <div className="mb-2 text-[12px] font-semibold text-[#5B21B6]">Cara membaca S-Box</div>
-          <p className="text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
-            S-Box adalah jantung non-linearitas DES. Input 6 bit menjadi output 4 bit: bit pertama dan terakhir memilih baris (0-3), empat bit tengah memilih kolom (0-15), lalu hasil diambil dari perpotongan baris dan kolom.
-          </p>
-          <p className="mt-2 text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
-            S-Box sengaja dibuat non-linear, tidak ada rumus sederhana untuk menebak outputnya. Inilah yang membuat DES lebih sulit dipecah secara analitik.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {chunks.map((chunk, index) => {
+        <div className="flex flex-wrap gap-2">
+          {sboxIndexes.map((index) => {
             const active = index === activeBox;
-            const row = parseInt(`${chunk[0]}${chunk[5]}`, 2);
-            const column = parseInt(chunk.slice(1, 5), 2);
-            const chars = chunk.split('');
 
             return (
               <button
-                key={`${chunk}-${index}`}
+                key={`sbox-table-tab-${index}`}
                 type="button"
                 onClick={() => setActiveBox(index)}
-                className={`rounded-[12px] border p-3 text-left transition-colors ${
-                  active ? 'border-[#7C3AED] bg-[#F5F3FF] shadow-[0_0_0_3px_rgba(221,214,254,0.9)]' : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]'
+                className={`rounded-[9px] border px-3 py-2 text-[12px] font-semibold transition-colors ${
+                  active
+                    ? 'border-[#7C3AED] bg-[#7C3AED] text-white shadow-sm'
+                    : 'border-[#DDD6FE] bg-white text-[#6D28D9] hover:bg-[#F5F3FF]'
                 }`}
               >
-                <div className="text-[11px] font-semibold text-[#5B21B6]">S{index + 1}</div>
-                <div className="mt-1 flex gap-1 font-mono text-[13px] font-semibold">
-                  {chars.map((bit, bitIndex) => (
-                    <motion.span
-                      key={`${chunk}-${bitIndex}`}
-                      animate={active && (bitIndex === 0 || bitIndex === 5) ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-                      transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
-                      className={`rounded-[5px] px-1.5 py-1 ${
-                        bitIndex === 0 || bitIndex === 5
-                          ? 'bg-[#FEF3C7] text-[#92400E]'
-                          : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
-                      }`}
-                    >
-                      {bit}
-                    </motion.span>
-                  ))}
-                </div>
-                <div className="mt-1 text-[10px] text-[#64748B]">baris {row}, kolom {column}</div>
-                <div className="mt-2 rounded-[8px] bg-white px-2 py-1 font-mono text-[11px] text-[#6D28D9] ring-1 ring-[#DDD6FE]">
-                  out {outputs[index]}
-                </div>
+                S{index + 1}
               </button>
             );
           })}
         </div>
         <SBoxTable boxIndex={activeBox} chunk={chunks[activeBox] ?? '000000'} outputBits={outputs[activeBox] ?? '0000'} />
       </div>
-      <div className="space-y-3">
-        <BitGrid bits={bits.sboxOutput} label="Output gabungan S-Box (32 bit)" />
-        <InfoBox step={roundSteps[3]} />
-      </div>
-    </>
+    </div>
   );
 }
 
