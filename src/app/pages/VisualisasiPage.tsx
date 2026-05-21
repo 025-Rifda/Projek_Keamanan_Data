@@ -1847,24 +1847,6 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
                 <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Ciphertext final</div>
                 <div className="mt-2 break-all font-mono text-[26px] font-semibold text-[#15803D] md:text-[34px]">{details.finalOutput}</div>
               </div>
-              <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-4">
-                <div className="mb-3 text-[12px] font-semibold text-[#0F172A]">Ringkasan perjalanan DES</div>
-                <div className="grid gap-2 md:grid-cols-5">
-                  {[
-                    ['Plaintext', details.inputHex],
-                    ['IP', details.initialPermutation],
-                    ['16x Feistel', details.preOutput],
-                    ['FP', details.finalOutput],
-                    ['Ciphertext', details.finalOutput],
-                  ].map(([label, value], index) => (
-                    <div key={`${label}-${index}`} className="relative rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3">
-                      <div className="text-[10px] font-semibold text-[#64748B]">{label}</div>
-                      <div className="mt-1 break-all font-mono text-[11px] font-semibold text-[#0F172A]">{value}</div>
-                      {index < 4 && <ArrowRight className="absolute -right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#94A3B8] md:block" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
               <div className="grid gap-2 md:grid-cols-4">
                 {finalBytes.map((byte, index) => (
                   <div key={`${byte}-${index}`} className="rounded-[12px] border border-[#E2E8F0] bg-white p-3">
