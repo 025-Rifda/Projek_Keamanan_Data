@@ -16,6 +16,7 @@ import {
   SkipForward,
   Table2,
   FlaskConical,
+  LockKeyhole,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -1715,6 +1716,56 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
     );
   };
 
+  const renderFinalSwapBitGrid = (
+    bits: string[],
+    tone: 'blue' | 'green',
+    offset = 0,
+  ) => {
+    const toneClass = tone === 'green'
+      ? 'border-[#86EFAC] bg-[#F0FDF4] text-[#15803D]'
+      : 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]';
+
+    return (
+      <div className="grid grid-cols-8 gap-1.5 sm:gap-2">
+        {bits.map((bit, index) => (
+          <div
+            key={`swap-${tone}-${offset}-${index}`}
+            title={`Bit ${offset + index + 1}`}
+            className={`relative flex h-8 min-w-0 items-center justify-center rounded-[8px] border font-mono text-[12px] font-semibold shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${toneClass}`}
+          >
+            <span className="leading-none">{bit}</span>
+            <span className="absolute bottom-0.5 right-1 text-[6.5px] leading-none opacity-35">{offset + index + 1}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderFpBitGrid = (
+    bits: string[],
+    tone: 'amber' | 'green',
+    offset = 0,
+  ) => {
+    const toneClass = tone === 'amber'
+      ? 'border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]'
+      : 'border-[#86EFAC] bg-[#F0FDF4] text-[#15803D]';
+
+    return (
+      <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-16 sm:gap-2">
+        {bits.map((bit, index) => (
+          <div
+            key={`fp-${tone}-${offset}-${index}`}
+            title={`Posisi ${offset + index + 1}`}
+            className={`relative flex h-8 min-w-0 items-center justify-center rounded-[8px] border font-mono text-[12px] font-semibold shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${toneClass}`}
+          >
+            <span className="leading-none">{bit}</span>
+            <span className="absolute bottom-0.5 right-1 text-[6.5px] leading-none opacity-35">{offset + index + 1}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const goPrevious = () => setActiveStage((current) => Math.max(current - 1, 0));
   const goNext = () => setActiveStage((current) => Math.min(current + 1, stages.length - 1));
   const active = stages[activeStage];
@@ -1762,82 +1813,300 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
           transition={{ duration: 0.22 }}
           className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-4"
         >
-          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className="inline-flex rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1 text-[11px] font-semibold text-[#1D4ED8]">
+              <div className="inline-flex rounded-full border border-[#BFDBFE] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8] shadow-sm">
                 {active.caption}
               </div>
               <p className="mt-2 max-w-[660px] text-[12px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
                 {active.text}
               </p>
             </div>
-            <div className="rounded-[10px] bg-white px-3 py-2 font-mono text-[12px] font-semibold text-[#0F172A] ring-1 ring-[#E2E8F0]">
+            <div className="rounded-full border border-[#E2E8F0] bg-white px-3 py-1.5 font-mono text-[12px] font-semibold text-[#0F172A] shadow-sm">
               {activeStage + 1}/3
             </div>
           </div>
 
           {activeStage === 0 && (
-            <div className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
-              <div className="space-y-3">
-                <div className="rounded-[12px] border border-[#86EFAC] bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold text-[#15803D]">R16 diletakkan duluan (32 bit)</div>
-                    <div className="font-mono text-[11px] text-[#15803D]">{finalRound?.newR}</div>
-                  </div>
-                  {renderBitGrid(r16Bits, 'green', 0)}
+            <div className="space-y-5">
+              <div className="grid items-stretch gap-5 lg:grid-cols-[1.08fr_0.92fr]">
+                <div className="flex flex-col gap-5">
+                  <section className="rounded-[18px] border border-[#BBF7D0] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-[14px] font-semibold text-[#14532D]">R16 diletakkan duluan</div>
+                        <div className="mt-1 text-[12px] text-[#15803D]">32 bit kanan hasil ronde terakhir menjadi bagian pertama preoutput.</div>
+                      </div>
+                      <div className="w-fit rounded-full border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-1 font-mono text-[11px] font-semibold text-[#15803D]">
+                        {finalRound?.newR}
+                      </div>
+                    </div>
+                    {renderFinalSwapBitGrid(r16Bits, 'green', 0)}
+                  </section>
+
+                  <section className="rounded-[18px] border border-[#BFDBFE] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-[14px] font-semibold text-[#1E3A8A]">L16 diletakkan setelah R16</div>
+                        <div className="mt-1 text-[12px] text-[#1D4ED8]">32 bit kiri hasil ronde terakhir menjadi bagian kedua preoutput.</div>
+                      </div>
+                      <div className="w-fit rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1 font-mono text-[11px] font-semibold text-[#1D4ED8]">
+                        {finalRound?.newL}
+                      </div>
+                    </div>
+                    {renderFinalSwapBitGrid(l16Bits, 'blue', 32)}
+                  </section>
                 </div>
-                <div className="rounded-[12px] border border-[#BFDBFE] bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold text-[#1D4ED8]">L16 diletakkan setelah R16 (32 bit)</div>
-                    <div className="font-mono text-[11px] text-[#1D4ED8]">{finalRound?.newL}</div>
+
+                <aside className="flex h-full flex-col rounded-[20px] border border-[#FDE68A] bg-[#FFFBEB] p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:flex-col lg:justify-start xl:flex-row">
+                    <div>
+                      <div className="text-[15px] font-semibold text-[#78350F]">Preoutput DES</div>
+                      <div className="mt-1 text-[12px] text-[#92400E]">Susunan 64 bit sebelum masuk ke Final Permutation.</div>
+                    </div>
+                    <div className="w-fit rounded-full border border-[#FDE68A] bg-white/80 px-3 py-1 font-mono text-[11px] font-semibold text-[#92400E]">
+                      R16 || L16
+                    </div>
                   </div>
-                  {renderBitGrid(l16Bits, 'blue', 32)}
-                </div>
+
+                  <div className="my-5 h-px bg-[#FDE68A]" />
+
+                  <div className="rounded-[16px] border border-[#FDE68A] bg-white/75 p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#92400E]">Hex preoutput</div>
+                    <div className="mt-2 break-all font-mono text-[20px] font-semibold text-[#78350F]">
+                      {details.preOutput}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <div className="min-w-0 rounded-[14px] border border-[#BBF7D0] bg-white/75 px-3 py-3">
+                      <div className="text-[10px] font-semibold text-[#15803D]">R16</div>
+                      <div className="mt-1 truncate font-mono text-[12px] font-semibold text-[#14532D]">{finalRound?.newR}</div>
+                    </div>
+                    <div className="font-mono text-[18px] font-semibold text-[#92400E]">||</div>
+                    <div className="min-w-0 rounded-[14px] border border-[#BFDBFE] bg-white/75 px-3 py-3">
+                      <div className="text-[10px] font-semibold text-[#1D4ED8]">L16</div>
+                      <div className="mt-1 truncate font-mono text-[12px] font-semibold text-[#1E3A8A]">{finalRound?.newL}</div>
+                    </div>
+                  </div>
+
+                  <p className="mt-auto pt-5 text-[12px] text-[#92400E]" style={{ lineHeight: 1.7 }}>
+                    Setelah ronde ke-16, DES tidak memakai L16 || R16 untuk FP. Urutan finalnya adalah R16 || L16, lalu 64 bit ini masuk ke Final Permutation.
+                  </p>
+                </aside>
               </div>
-              <div className="rounded-[12px] border border-[#FDE68A] bg-[#FFFBEB] p-4">
-                <div className="text-[12px] font-semibold text-[#92400E]">Preoutput DES</div>
-                <div className="mt-3 rounded-[10px] bg-white px-3 py-2 font-mono text-[13px] font-semibold text-[#0F172A] ring-1 ring-[#FDE68A]">
-                  {details.preOutput}
+
+              <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+                <div className="mb-3 text-[13px] font-semibold text-[#0F172A]">Keterangan / Legend</div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="flex items-center gap-2 text-[12px] text-[#475569]">
+                    <span className="h-3 w-3 rounded-[4px] border border-[#86EFAC] bg-[#F0FDF4]" />
+                    Warna hijau = R16
+                  </div>
+                  <div className="flex items-center gap-2 text-[12px] text-[#475569]">
+                    <span className="h-3 w-3 rounded-[4px] border border-[#BFDBFE] bg-[#EFF6FF]" />
+                    Warna biru = L16
+                  </div>
+                  <div className="flex items-center gap-2 text-[12px] text-[#475569]">
+                    <span className="font-mono text-[13px] font-semibold text-[#0F172A]">||</span>
+                    Simbol || = konkatenasi
+                  </div>
+                  <div className="flex items-center gap-2 text-[12px] text-[#475569]">
+                    <span className="h-3 w-3 rounded-[4px] border border-[#FDE68A] bg-[#FFFBEB]" />
+                    Warna kuning = preoutput sebelum final permutation
+                  </div>
                 </div>
-                <p className="mt-3 text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-                  Setelah ronde ke-16, DES tidak memakai L16 || R16 untuk FP. Urutan finalnya adalah R16 || L16, lalu 64 bit ini masuk ke Final Permutation.
-                </p>
               </div>
             </div>
           )}
 
           {activeStage === 1 && (
-            <div className="space-y-4">
-              <div className="rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
-                <p className="text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
-                  FP adalah kebalikan tepat dari IP. Jika kamu terapkan IP lalu FP pada bit yang sama, bit kembali ke posisi semula; keduanya adalah pasangan yang saling membatalkan.
-                </p>
+            <div className="space-y-6 rounded-[22px] bg-[#F8FAFC]">
+              <section className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] md:p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8]">
+                      <CircleDot className="h-3.5 w-3.5" />
+                      Final Permutation
+                    </div>
+                    <h3 className="mt-4 text-[24px] font-semibold text-[#0F172A] md:text-[30px]">
+                      Final Permutation (FP) dan Ciphertext
+                    </h3>
+                    <p className="mt-2 max-w-[660px] text-[13px] text-[#64748B] md:text-[14px]" style={{ lineHeight: 1.75 }}>
+                      Setelah 16 ronde, blok hasil final swap dipermutasi menggunakan tabel FP untuk menghasilkan ciphertext.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] p-2 shadow-sm">
+                    {stages.map((stage, index) => {
+                      const activeTab = index === activeStage;
+
+                      return (
+                        <button
+                          key={`fp-stage-tab-${stage.title}`}
+                          type="button"
+                          onClick={() => setActiveStage(index)}
+                          className={`rounded-full px-3 py-2 text-[11px] font-semibold transition-colors ${
+                            activeTab
+                              ? 'bg-[#EFF6FF] text-[#1D4ED8] shadow-[0_6px_18px_rgba(37,99,235,0.14)] ring-1 ring-[#BFDBFE]'
+                              : 'bg-white text-[#64748B] ring-1 ring-[#E2E8F0] hover:text-[#0F172A]'
+                          }`}
+                        >
+                          {index + 1}. {stage.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <div className="rounded-[18px] border border-[#BFDBFE] bg-[#EFF6FF] p-4 shadow-[0_10px_28px_rgba(37,99,235,0.08)]">
+                <div className="flex gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-white text-[#2563EB] ring-1 ring-[#BFDBFE]">
+                    <Info className="h-4.5 w-4.5" />
+                  </div>
+                  <p className="text-[13px] text-[#1D4ED8]" style={{ lineHeight: 1.7 }}>
+                    Final Permutation tidak mengubah nilai bit, hanya memindahkan posisi bit sesuai tabel FP.
+                  </p>
+                </div>
               </div>
-              <div className="grid gap-3 lg:grid-cols-2">
-                <div className="rounded-[12px] border border-[#FDE68A] bg-white p-3">
-                  <div className="mb-2 text-[11px] font-semibold text-[#92400E]">Input FP: R16 || L16</div>
-                  {renderBitGrid(preOutputBits, 'amber')}
+
+              <div className="grid gap-5 xl:grid-cols-[1.18fr_0.82fr]">
+                <div className="space-y-5">
+                  <div className="mb-1 text-[13px] font-semibold text-[#0F172A]">Input dan Output Visual</div>
+
+                  <section className="rounded-[20px] border border-[#FDE68A] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-[15px] font-semibold text-[#78350F]">Input untuk FP (R16 || L16)</div>
+                        <div className="mt-1 text-[12px] text-[#92400E]">Bit sebelum dipermutasi</div>
+                      </div>
+                      <span className="w-fit rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-3 py-1 font-mono text-[11px] font-semibold text-[#92400E]">
+                        64 bit
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB]/55 p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-[#92400E]">R16 - 32 bit pertama</span>
+                          <span className="font-mono text-[10px] font-semibold text-[#92400E]">{finalRound?.newR}</span>
+                        </div>
+                        {renderFpBitGrid(r16Bits, 'amber', 0)}
+                      </div>
+                      <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB]/55 p-3">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-[#92400E]">L16 - 32 bit terakhir</span>
+                          <span className="font-mono text-[10px] font-semibold text-[#92400E]">{finalRound?.newL}</span>
+                        </div>
+                        {renderFpBitGrid(l16Bits, 'amber', 32)}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="rounded-[20px] border border-[#86EFAC] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-[15px] font-semibold text-[#14532D]">Output FP (ciphertext bits)</div>
+                        <div className="mt-1 text-[12px] text-[#15803D]">Bit setelah Final Permutation</div>
+                      </div>
+                      <span className="w-fit rounded-full border border-[#86EFAC] bg-[#F0FDF4] px-3 py-1 font-mono text-[11px] font-semibold text-[#15803D]">
+                        64 bit
+                      </span>
+                    </div>
+                    {renderFpBitGrid(finalBits, 'green', 0)}
+                  </section>
                 </div>
-                <div className="rounded-[12px] border border-[#86EFAC] bg-white p-3">
-                  <div className="mb-2 text-[11px] font-semibold text-[#15803D]">Output FP: ciphertext bits</div>
-                  {renderBitGrid(finalBits, 'green')}
-                </div>
+
+                <aside className="space-y-5">
+                  <section className="rounded-[20px] border border-[#BFDBFE] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+                    <div className="text-[15px] font-semibold text-[#0F172A]">Bagaimana FP bekerja?</div>
+                    <div className="mt-3 space-y-3 text-[12px] text-[#475569]" style={{ lineHeight: 1.7 }}>
+                      <p>FP mengambil bit dari posisi tertentu pada input R16 || L16.</p>
+                      <p>
+                        Contoh <span className="font-mono font-semibold text-[#1D4ED8]">1 ← 40</span> berarti output bit ke-1 diambil dari input bit ke-40.
+                      </p>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-3">
+                      <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] p-3 text-center">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#92400E]">Input bit</div>
+                        <div className="mt-1 font-mono text-[20px] font-semibold text-[#78350F]">{preOutputBits[39]}</div>
+                        <div className="mt-1 text-[10px] text-[#92400E]">posisi 40</div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <ArrowRight className="h-5 w-5 rotate-90 text-[#94A3B8]" />
+                      </div>
+                      <div className="rounded-[16px] border border-[#BFDBFE] bg-[#EFF6FF] p-3 text-center">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1D4ED8]">Aturan FP</div>
+                        <div className="mt-1 font-mono text-[18px] font-semibold text-[#1D4ED8]">1 ← 40</div>
+                        <div className="mt-1 text-[10px] text-[#1D4ED8]">output 1 mengambil input 40</div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <ArrowRight className="h-5 w-5 rotate-90 text-[#94A3B8]" />
+                      </div>
+                      <div className="rounded-[16px] border border-[#86EFAC] bg-[#F0FDF4] p-3 text-center">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Output bit</div>
+                        <div className="mt-1 font-mono text-[20px] font-semibold text-[#14532D]">{finalBits[0]}</div>
+                        <div className="mt-1 text-[10px] text-[#15803D]">posisi 1</div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="rounded-[20px] border border-[#86EFAC] bg-gradient-to-br from-white via-[#F0FDF4] to-[#DCFCE7] p-5 shadow-[0_18px_48px_rgba(22,163,74,0.14)]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-white text-[#15803D] ring-1 ring-[#86EFAC]">
+                        <LockKeyhole className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Ciphertext (Hex)</div>
+                        <div className="mt-1 break-all font-mono text-[26px] font-semibold text-[#14532D]">{details.finalOutput}</div>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[12px] text-[#15803D]" style={{ lineHeight: 1.7 }}>
+                      Hasil akhir enkripsi DES setelah Final Permutation.
+                    </p>
+                  </section>
+                </aside>
               </div>
-              <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-3">
-                <div className="mb-3 flex items-center gap-2">
-                  <Table2 className="h-4 w-4 text-[#2563EB]" />
-                  <div className="text-[12px] font-semibold text-[#0F172A]">Tabel Final Permutation lengkap</div>
+
+              <section className="rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0F172A]">
+                      <Table2 className="h-4 w-4 text-[#2563EB]" />
+                      Tabel Final Permutation (FP)
+                    </div>
+                    <p className="mt-1 text-[12px] text-[#64748B]">Output bit ke-i mengambil nilai dari input bit ke-j.</p>
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 gap-1 sm:grid-cols-8">
+                <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-8">
                   {DES_FINAL_PERMUTATION_TABLE.map((sourcePosition, index) => (
-                    <div key={index} className="rounded-[7px] border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-1.5 text-center">
-                      <div className="text-[8px] text-[#64748B]">out {index + 1}</div>
-                      <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{`${preOutputBits[sourcePosition - 1]} -> ${finalBits[index]}`}</div>
-                      <div className="text-[8px] text-[#64748B]">ambil in {sourcePosition}</div>
+                    <div
+                      key={`fp-table-${index}-${sourcePosition}`}
+                      title={`Output bit ke-${index + 1} mengambil input bit ke-${sourcePosition}`}
+                      className="rounded-[11px] border border-[#E2E8F0] bg-[#F8FAFC] px-2 py-2 text-center font-mono text-[11px] font-semibold text-[#0F172A] transition-colors hover:border-[#BFDBFE] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
+                    >
+                      {index + 1} ← {sourcePosition}
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
+
+              <section className="rounded-[20px] border border-[#E2E8F0] bg-[#F8FAFC] p-5">
+                <div className="text-[15px] font-semibold text-[#0F172A]">Ringkasan</div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {[
+                    'Input FP = R16 || L16',
+                    'FP hanya mengubah posisi bit',
+                    'Hasil akhir = ciphertext 64 bit',
+                  ].map((item) => (
+                    <div key={item} className="rounded-[14px] border border-[#E2E8F0] bg-white px-3 py-3 text-[12px] text-[#475569] shadow-sm">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           )}
 
@@ -1846,24 +2115,6 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
               <div className="rounded-[14px] border border-[#86EFAC] bg-white p-4 text-center">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Ciphertext final</div>
                 <div className="mt-2 break-all font-mono text-[26px] font-semibold text-[#15803D] md:text-[34px]">{details.finalOutput}</div>
-              </div>
-              <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-4">
-                <div className="mb-3 text-[12px] font-semibold text-[#0F172A]">Ringkasan perjalanan DES</div>
-                <div className="grid gap-2 md:grid-cols-5">
-                  {[
-                    ['Plaintext', details.inputHex],
-                    ['IP', details.initialPermutation],
-                    ['16x Feistel', details.preOutput],
-                    ['FP', details.finalOutput],
-                    ['Ciphertext', details.finalOutput],
-                  ].map(([label, value], index) => (
-                    <div key={`${label}-${index}`} className="relative rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3">
-                      <div className="text-[10px] font-semibold text-[#64748B]">{label}</div>
-                      <div className="mt-1 break-all font-mono text-[11px] font-semibold text-[#0F172A]">{value}</div>
-                      {index < 4 && <ArrowRight className="absolute -right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#94A3B8] md:block" />}
-                    </div>
-                  ))}
-                </div>
               </div>
               <div className="grid gap-2 md:grid-cols-4">
                 {finalBytes.map((byte, index) => (
