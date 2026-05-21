@@ -36,7 +36,7 @@ const developers = [
     email: 'DestaBerlianda1205@gmail.com',
   },
   {
-    name: 'Dea Suci Ramadhani',
+    name: 'Dea Suci Ramadhani putri',
     badge: 'Anggota 3',
     badgeColor: '#059669',
     badgeBg: '#ECFDF5',
