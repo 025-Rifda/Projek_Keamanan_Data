@@ -189,6 +189,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
   const keyBytes = details.keyBits.match(/.{1,8}/g) ?? [];
   const hasPaddingChar = chars.some((char) => char === '\0');
   const [activeCharIndex, setActiveCharIndex] = useState(0);
+  const [activeKeyCharIndex, setActiveKeyCharIndex] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -198,10 +199,22 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
     return () => window.clearInterval(timer);
   }, [chars.length]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveKeyCharIndex((current) => (current + 1) % keyChars.length);
+    }, 1400);
+
+    return () => window.clearInterval(timer);
+  }, [keyChars.length]);
+
   const activeChar = chars[activeCharIndex] ?? '\0';
   const activeCharLabel = activeChar === '\0' ? 'posisi kosong' : activeChar === ' ' ? 'spasi' : activeChar;
   const activeAscii = ascii[activeCharIndex] ?? 0;
   const activeByte = bytes[activeCharIndex] ?? '00000000';
+  const activeKeyChar = keyChars[activeKeyCharIndex] ?? '\0';
+  const activeKeyCharLabel = activeKeyChar === '\0' ? 'posisi kosong' : activeKeyChar === ' ' ? 'spasi' : activeKeyChar;
+  const activeKeyAscii = keyAscii[activeKeyCharIndex] ?? 0;
+  const activeKeyByte = keyBytes[activeKeyCharIndex] ?? '00000000';
 
   const renderCharCard = (
     char: string,
@@ -211,8 +224,9 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
     tone: 'blue' | 'purple',
   ) => {
     const isPadding = char === '\0';
-    const isActive = tone === 'blue' && index === activeCharIndex;
+    const isActive = tone === 'blue' ? index === activeCharIndex : index === activeKeyCharIndex;
     const toneClass = tone === 'blue' ? 'text-[#1D4ED8]' : 'text-[#6D28D9]';
+    const activeRingClass = tone === 'blue' ? 'ring-2 ring-[#93C5FD]' : 'ring-2 ring-[#C4B5FD]';
     const cardClass = isPadding
       ? 'bg-[#F8FAFC] border-[0.5px] border-dashed border-[#CBD5E1] opacity-60'
       : 'bg-[#F8FAFC] border-[0.5px] border-[#E2E8F0]';
@@ -224,7 +238,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
         animate={{ scale: isActive ? 1.04 : 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         title={`Huruf '${readableChar}' punya kode ASCII ${asciiValue}. ${asciiValue} dalam biner adalah ${byte}.`}
-        className={`${cardClass} ${isActive ? 'ring-2 ring-[#93C5FD]' : ''} rounded-[8px] px-3 py-2.5`}
+        className={`${cardClass} ${isActive ? activeRingClass : ''} rounded-[8px] px-3 py-2.5`}
       >
         <div className={`text-[18px] font-medium ${toneClass} mb-1`}>{formatChar(char)}</div>
         <div className="text-[10px] text-[#64748B] mb-1">ASCII: {asciiValue}</div>
@@ -292,16 +306,31 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
           {formatBinaryGroups(details.inputBits, 8)}
         </div>
 
-        <div className="mt-3 rounded-[10px] border-[0.5px] border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3">
-          <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
-            Hasil akhir DES akan ditampilkan dalam format hexadecimal. 2 karakter hex = 1 byte = 8 bit. Contoh:{' '}
-            <span className="font-mono font-semibold text-[#0F172A]">7D = 01111101</span>.
-          </p>
-        </div>
-
         <div className="my-4 border-t-[0.5px] border-[#E2E8F0]" />
 
         <div className="mb-3 text-[11px] font-medium text-[#64748B]">Konversi key ke 64 bit</div>
+        <div className="mb-4 rounded-[14px] border border-[#C4B5FD] bg-[#F5F3FF] p-4">
+          <div className="mb-3 text-[12px] font-semibold text-[#6D28D9]">Animasi key ke biner</div>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1.4fr] md:items-center">
+            <div className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#C4B5FD]">
+              <div className="text-[10px] font-semibold text-[#64748B]">Karakter</div>
+              <div className="mt-1 text-[28px] font-semibold text-[#6D28D9]">{formatChar(activeKeyChar)}</div>
+            </div>
+            <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#7C3AED] md:rotate-0" />
+            <div className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#C4B5FD]">
+              <div className="text-[10px] font-semibold text-[#64748B]">ASCII</div>
+              <div className="mt-1 font-mono text-[22px] font-semibold text-[#0F172A]">{activeKeyAscii}</div>
+            </div>
+            <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#7C3AED] md:rotate-0" />
+            <div className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#C4B5FD]">
+              <div className="text-[10px] font-semibold text-[#64748B]">Binary 8 bit</div>
+              <div className="mt-1 font-mono text-[18px] font-semibold text-[#6D28D9]">{activeKeyByte}</div>
+            </div>
+          </div>
+          <p className="mt-3 text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
+            Huruf '{activeKeyCharLabel}' punya kode ASCII {activeKeyAscii}. {activeKeyAscii} dalam biner adalah {activeKeyByte}.
+          </p>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
           {keyChars.map((char, index) => renderCharCard(char, index, keyAscii[index], keyBytes[index], 'purple'))}
         </div>
