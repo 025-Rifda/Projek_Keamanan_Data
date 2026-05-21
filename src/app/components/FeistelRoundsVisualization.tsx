@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, CircleDot, Info, KeyRound, Shuffle, Table2 } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, CircleDot, Info, KeyRound, Pause, Play, Table2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DES_EXPANSION_TABLE, DES_PERMUTATION_P_TABLE, DES_S_BOXES } from '../utils/des';
 
@@ -54,7 +54,7 @@ const roundSteps: RoundStep[] = [
     tab: 'XOR Subkey K',
     title: 'XOR dengan subkey ronde',
     size: '48 -> 48 bit',
-    tone: 'amber',
+    tone: 'blue',
     info: 'XOR memasukkan pengaruh kunci ke data. Bit output menjadi 1 jika bit ekspansi dan bit subkey berbeda.',
   },
   {
@@ -110,9 +110,9 @@ const toneClass = {
     solid: 'bg-[#0891B2] text-white',
   },
   rose: {
-    active: 'border-[#E11D48] bg-[#FFF1F2] text-[#BE123C]',
-    soft: 'border-[#FECDD3] bg-[#FFF1F2] text-[#BE123C]',
-    solid: 'bg-[#E11D48] text-white',
+    active: 'border-[#93C5FD] bg-[#EFF6FF] text-[#1D4ED8]',
+    soft: 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]',
+    solid: 'bg-[#2563EB] text-white',
   },
 } satisfies Record<RoundStep['tone'], { active: string; soft: string; solid: string }>;
 
@@ -187,7 +187,7 @@ function BitCell({
   changed,
   muted,
   title,
-  large,
+  size = 'normal',
 }: {
   bit: string;
   index: number;
@@ -195,22 +195,27 @@ function BitCell({
   changed?: boolean;
   muted?: boolean;
   title?: string;
-  large?: boolean;
+  size?: 'normal' | 'large' | 'xl';
 }) {
-  const stateClass = changed
-    ? 'border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_12px_rgba(245,158,11,0.22)]'
-    : active
+  const sizeClass = {
+    normal: 'h-6 w-6 text-[11px]',
+    large: 'h-7 w-7 text-[12px]',
+    xl: 'h-9 w-9 text-[14px]',
+  }[size];
+  const stateClass = active
       ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]'
-      : bit === '1'
-        ? 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
-        : 'border-[#E2E8F0] bg-white text-[#94A3B8]';
+      : changed
+        ? 'border-[#F59E0B] bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_12px_rgba(245,158,11,0.22)]'
+        : bit === '1'
+          ? 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
+          : 'border-[#E2E8F0] bg-white text-[#94A3B8]';
 
   return (
     <div
       title={title ?? `Bit ${index + 1}`}
-      className={`flex ${large ? 'h-7 w-7 text-[12px]' : 'h-6 w-6 text-[11px]'} items-center justify-center rounded-[6px] border font-mono font-semibold transition-colors ${
+      className={`flex ${sizeClass} items-center justify-center rounded-[7px] border font-mono font-semibold transition-colors ${
         muted ? 'opacity-45' : ''
-      } ${stateClass}`}
+      } ${active ? 'ring-4 ring-[#93C5FD] ring-offset-2 ring-offset-white' : ''} ${stateClass}`}
     >
       {bit}
     </div>
@@ -225,6 +230,7 @@ function BitGrid({
   activeIndexes = [],
   note,
   large = false,
+  size,
 }: {
   bits: string;
   label: string;
@@ -233,17 +239,20 @@ function BitGrid({
   activeIndexes?: number[];
   note?: string;
   large?: boolean;
+  size?: 'normal' | 'large' | 'xl';
 }) {
   const changedSet = new Set(changedIndexes);
   const activeSet = new Set(activeIndexes);
+  const cellSize = size ?? (large ? 'large' : 'normal');
+  const isRoomy = cellSize !== 'normal';
 
   return (
-    <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${large ? 'p-4' : 'p-3'}`}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">{label}</div>
-        <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{binaryToHex(bits)}</div>
+    <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${isRoomy ? 'p-4' : 'p-3'}`}>
+      <div className={`${isRoomy ? 'mb-3' : 'mb-2'} flex items-center justify-between gap-2`}>
+        <div className={`${cellSize === 'xl' ? 'text-[12px]' : 'text-[11px]'} font-semibold uppercase tracking-[0.08em] text-[#64748B]`}>{label}</div>
+        <div className={`${cellSize === 'xl' ? 'text-[12px]' : 'text-[11px]'} font-mono font-semibold text-[#0F172A]`}>{binaryToHex(bits)}</div>
       </div>
-      <div className={`grid ${large ? 'gap-1.5' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+      <div className={`grid ${cellSize === 'xl' ? 'gap-2' : isRoomy ? 'gap-1.5' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
         {bits.split('').map((bit, index) => (
           <BitCell
             key={`${label}-${index}`}
@@ -251,7 +260,7 @@ function BitGrid({
             index={index}
             changed={changedSet.has(index)}
             active={activeSet.has(index)}
-            large={large}
+            size={cellSize}
           />
         ))}
       </div>
@@ -325,6 +334,9 @@ function MappingTable({
   label,
   columns,
   mappingOnly = false,
+  activeIndex,
+  onSelectIndex,
+  large = false,
 }: {
   table: number[];
   inputBits: string;
@@ -332,23 +344,49 @@ function MappingTable({
   label: string;
   columns: 6 | 8;
   mappingOnly?: boolean;
+  activeIndex?: number;
+  onSelectIndex?: (index: number) => void;
+  large?: boolean;
 }) {
   return (
-    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#0F172A]">
-          <Table2 className="h-4 w-4 text-[#2563EB]" />
+    <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${large ? 'p-4' : 'p-3'}`}>
+      <div className={`${large ? 'mb-4' : 'mb-3'} flex items-center justify-between gap-2`}>
+        <div className={`inline-flex items-center gap-2 ${large ? 'text-[14px]' : 'text-[12px]'} font-semibold text-[#0F172A]`}>
+          <Table2 className={`${large ? 'h-5 w-5' : 'h-4 w-4'} text-[#2563EB]`} />
           {label}
         </div>
-        <div className="text-[11px] text-[#64748B]">Output mengambil posisi input</div>
+        <div className={`${large ? 'text-[12px]' : 'text-[11px]'} text-[#64748B]`}>Output mengambil posisi input</div>
       </div>
-      <div className={`grid gap-1 ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+      <div className={`grid ${large ? 'gap-2' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
         {table.map((sourcePosition, index) => {
           const bit = outputBits[index] ?? inputBits[sourcePosition - 1] ?? '0';
+          const active = activeIndex === index;
+          const interactive = onSelectIndex !== undefined;
+
+          if (interactive) {
+            return (
+              <motion.button
+                key={`${label}-${index}`}
+                type="button"
+                onClick={() => onSelectIndex(index)}
+                animate={{ scale: active ? 1.08 : 1 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                title={`Output bit ke-${index + 1} mengambil input bit ke-${sourcePosition}`}
+                className={`${large ? 'aspect-square min-h-[46px] rounded-[10px] text-[14px]' : 'h-8 rounded-[7px] text-[11px]'} border px-1 text-center font-mono font-semibold transition-colors ${
+                  active
+                    ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)]'
+                    : 'border-[#BFDBFE] bg-white text-[#1D4ED8] hover:bg-[#EFF6FF]'
+                }`}
+              >
+                {sourcePosition}
+              </motion.button>
+            );
+          }
+
           return (
-            <div key={`${label}-${index}`} className="rounded-[7px] border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-1 text-center">
-              {!mappingOnly && <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{bit}</div>}
-              <div className={`${mappingOnly ? 'font-mono text-[10px] font-semibold text-[#334155]' : 'mt-0.5 text-[8px] leading-none text-[#64748B]'}`}>
+            <div key={`${label}-${index}`} className={`${large ? 'rounded-[10px] px-2 py-2' : 'rounded-[7px] px-1.5 py-1'} border border-[#E2E8F0] bg-[#F8FAFC] text-center`}>
+              {!mappingOnly && <div className={`font-mono ${large ? 'text-[13px]' : 'text-[11px]'} font-semibold text-[#0F172A]`}>{bit}</div>}
+              <div className={`${mappingOnly ? `font-mono ${large ? 'text-[12px]' : 'text-[10px]'} font-semibold text-[#334155]` : `${large ? 'mt-1 text-[10px]' : 'mt-0.5 text-[8px]'} leading-none text-[#64748B]`}`}>
                 {`${index + 1}<-${sourcePosition}`}
               </div>
             </div>
@@ -569,30 +607,88 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
 }
 
 function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  const [activeOutputIndex, setActiveOutputIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const duplicateInputIndexes = DES_EXPANSION_TABLE
     .filter((position, _, table) => table.indexOf(position) !== table.lastIndexOf(position))
     .map((position) => position - 1);
+  const activeInputIndex = DES_EXPANSION_TABLE[activeOutputIndex] - 1;
+
+  useEffect(() => {
+    setActiveOutputIndex(0);
+    setIsPlaying(false);
+  }, [bits.rightInput, bits.expansion]);
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveOutputIndex((current) => {
+        if (current >= DES_EXPANSION_TABLE.length - 1) {
+          setIsPlaying(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 700);
+
+    return () => window.clearInterval(timer);
+  }, [isPlaying]);
+
+  const start = () => {
+    setActiveOutputIndex((current) => (current >= DES_EXPANSION_TABLE.length - 1 ? 0 : current));
+    setIsPlaying(true);
+  };
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-4 xl:col-span-2">
         <div className="rounded-[14px] border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3">
           <p className="text-[12px] text-[#15803D]" style={{ lineHeight: 1.65 }}>
             Subkey K berukuran 48 bit. Agar bisa di-XOR, R juga harus 48 bit. Expansion menyalin beberapa bit tepi sehingga bit-bit tersebut memengaruhi dua S-Box sekaligus dan memperkuat difusi.
           </p>
         </div>
-        <BitGrid bits={bits.rightInput} label="Input R (32 bit), bit kuning disalin dua kali" changedIndexes={duplicateInputIndexes} />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <BitGrid
+            bits={bits.rightInput}
+            label="Input R (32 bit), bit kuning disalin dua kali"
+            changedIndexes={duplicateInputIndexes}
+            activeIndexes={[activeInputIndex]}
+            size="xl"
+          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-col">
+            <button
+              type="button"
+              onClick={isPlaying ? () => setIsPlaying(false) : start}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-5 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isPlaying ? 'Pause' : 'Mulai'}
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="space-y-3">
-        <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} mappingOnly />
+      <div className="space-y-3 xl:col-span-2">
+        <MappingTable
+          table={DES_EXPANSION_TABLE}
+          inputBits={bits.rightInput}
+          outputBits={bits.expansion}
+          label="Tabel Expansion E"
+          columns={6}
+          mappingOnly
+          activeIndex={activeOutputIndex}
+          onSelectIndex={(index) => {
+            setIsPlaying(false);
+            setActiveOutputIndex(index);
+          }}
+        />
         <div className="rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#64748B]">
-          Contoh: <span className="font-mono font-semibold text-[#0F172A]">1&lt;-32</span> berarti output urutan ke-1 diambil dari input urutan ke-32.
+          Output bit ke-{activeOutputIndex + 1} mengambil input R posisi {DES_EXPANSION_TABLE[activeOutputIndex]}.
         </div>
       </div>
       <div className="xl:col-span-2">
-        <div className="mx-auto w-full max-w-[620px]">
-          <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} />
-        </div>
+        <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} activeIndexes={[activeOutputIndex]} size="xl" />
       </div>
     </>
   );
@@ -600,73 +696,91 @@ function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
 
 function XorStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
   const [activeBitIndex, setActiveBitIndex] = useState(0);
-  const changedIndexes = bits.xorChanged.map((changed, index) => (changed ? index : -1)).filter((index) => index >= 0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const activeExpansionBit = bits.expansion[activeBitIndex] ?? '0';
   const activeSubkeyBit = bits.subkey[activeBitIndex] ?? '0';
   const activeResultBit = bits.xorWithKey[activeBitIndex] ?? (activeExpansionBit === activeSubkeyBit ? '0' : '1');
 
   useEffect(() => {
     setActiveBitIndex(0);
+    setIsPlaying(false);
+  }, [bits.expansion, bits.subkey, bits.xorWithKey]);
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
 
     const timer = window.setInterval(() => {
       setActiveBitIndex((current) => (current + 1) % 48);
     }, 1200);
 
     return () => window.clearInterval(timer);
-  }, [bits.expansion, bits.subkey, bits.xorWithKey]);
+  }, [isPlaying]);
 
   return (
     <>
+      <div className="xl:col-span-2 rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
+        <p className="text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
+          XOR (Exclusive OR) membandingkan bit E(R) dengan bit subkey K pada posisi yang sama. Jika kedua bit berbeda, hasilnya 1; jika sama, hasilnya 0. Contoh: 1 XOR 0 = 1, 0 XOR 0 = 0, 1 XOR 1 = 0. Di tahap ini, subkey mulai mencampur pengaruh kunci ke data sebelum masuk ke S-Box.
+        </p>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
-        <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
-        <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
+        <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} activeIndexes={[activeBitIndex]} />
+        <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} activeIndexes={[activeBitIndex]} />
       </div>
       <div className="xl:col-span-2">
-        <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] p-4">
+        <div className="rounded-[16px] border border-[#BFDBFE] bg-[#EFF6FF] p-4">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[13px] font-semibold text-[#78350F]">Animasi XOR bit ke-{activeBitIndex + 1}</div>
-            <div className="text-[11px] text-[#92400E]">E(R) bertemu Subkey K{round.round}</div>
+            <div className="text-[13px] font-semibold text-[#1D4ED8]">Animasi XOR bit ke-{activeBitIndex + 1}</div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="text-[11px] text-[#1D4ED8]">E(R) bertemu Subkey K{round.round}</div>
+              <button
+                type="button"
+                onClick={isPlaying ? () => setIsPlaying(false) : () => setIsPlaying(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {isPlaying ? 'Pause' : 'Mulai'}
+              </button>
+            </div>
           </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+          <div className="grid gap-3 md:grid-cols-[minmax(120px,0.8fr)_auto_minmax(120px,0.8fr)_auto_minmax(120px,0.8fr)] md:items-center">
             <motion.div
               key={`xor-er-${activeBitIndex}`}
-              initial={{ scale: 0.94, opacity: 0.7 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25 }}
-              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.02, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+              className="rounded-[10px] bg-[#2563EB] px-3 py-2.5 text-center text-white shadow-[0_8px_18px_rgba(37,99,235,0.22)] ring-2 ring-[#93C5FD]"
             >
-              <div className="text-[10px] font-semibold text-[#92400E]">E(R)</div>
-              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeExpansionBit}</div>
+              <div className="text-[10px] font-semibold text-white/85">E(R)</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeExpansionBit}</div>
             </motion.div>
-            <div className="text-center text-[12px] font-semibold text-[#92400E]">ketemu</div>
+            <div className="text-center text-[12px] font-semibold text-[#1D4ED8]">ketemu</div>
             <motion.div
               key={`xor-key-${activeBitIndex}`}
-              initial={{ scale: 0.94, opacity: 0.7 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25, delay: 0.08 }}
-              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.02, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.08 }}
+              className="rounded-[10px] bg-[#1D4ED8] px-3 py-2.5 text-center text-white shadow-[0_8px_18px_rgba(29,78,216,0.22)] ring-2 ring-[#93C5FD]"
             >
-              <div className="text-[10px] font-semibold text-[#92400E]">K{round.round}</div>
-              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeSubkeyBit}</div>
+              <div className="text-[10px] font-semibold text-white/85">K{round.round}</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeSubkeyBit}</div>
             </motion.div>
-            <div className="text-center text-[12px] font-semibold text-[#92400E]">sama dengan</div>
+            <div className="text-center text-[12px] font-semibold text-[#1D4ED8]">sama dengan</div>
             <motion.div
               key={`xor-result-${activeBitIndex}`}
-              initial={{ scale: 0.94, opacity: 0.7 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25, delay: 0.16 }}
-              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.03, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.16 }}
+              className="rounded-[10px] bg-[#1E40AF] px-3 py-2.5 text-center text-white shadow-[0_9px_20px_rgba(30,64,175,0.24)] ring-2 ring-[#93C5FD]"
             >
-              <div className="text-[10px] font-semibold text-[#92400E]">Hasil</div>
-              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeResultBit}</div>
+              <div className="text-[10px] font-semibold text-white/85">Hasil</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeResultBit}</div>
             </motion.div>
           </div>
         </div>
       </div>
       <div className="xl:col-span-2">
-        <div className="mx-auto w-full max-w-[620px]">
-          <BitGrid bits={bits.xorWithKey} label="Hasil E(R) XOR K (48 bit)" columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
-        </div>
+        <BitGrid bits={bits.xorWithKey} label="Hasil E(R) XOR K (48 bit)" columns={6} activeIndexes={[activeBitIndex]} large />
       </div>
     </>
   );
@@ -744,20 +858,28 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
             >
               <div className="text-[13px] font-semibold text-[#5B21B6]">S{index + 1}</div>
               <div className="grid grid-cols-6 gap-1 font-mono text-[13px] font-semibold">
-                {chars.map((bit, bitIndex) => (
-                  <motion.span
-                    key={`sbox-card-${index}-${bitIndex}`}
-                    animate={active && (bitIndex === 0 || bitIndex === 5) ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-                    transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
-                    className={`flex h-8 items-center justify-center rounded-[6px] ${
-                      bitIndex === 0 || bitIndex === 5
-                        ? 'bg-[#FEF3C7] text-[#92400E]'
-                        : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
-                    }`}
-                  >
-                    {bit}
-                  </motion.span>
-                ))}
+                {chars.map((bit, bitIndex) => {
+                  const isRowBit = bitIndex === 0 || bitIndex === 5;
+
+                  return (
+                    <div key={`sbox-card-${index}-${bitIndex}`} className="flex flex-col items-center gap-1">
+                      <motion.span
+                        animate={active && isRowBit ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+                        transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
+                        className={`flex h-8 w-full items-center justify-center rounded-[6px] ${
+                          isRowBit
+                            ? 'bg-[#FEF3C7] text-[#92400E]'
+                            : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
+                        }`}
+                      >
+                        {bit}
+                      </motion.span>
+                      <span className={`text-[8px] font-semibold leading-none ${isRowBit ? 'text-[#92400E]' : 'text-[#6D28D9]'}`}>
+                        {isRowBit ? 'baris' : 'kolom'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               <div className="text-[11px] text-[#64748B]">baris {row}, kolom {column}</div>
               <div className="mt-auto rounded-[9px] bg-white px-3 py-2 ring-1 ring-[#DDD6FE]">
@@ -774,8 +896,6 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
           );
         })}
       </div>
-
-      <SBoxOutputGrid outputs={outputs} />
 
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
@@ -800,25 +920,90 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         </div>
         <SBoxTable boxIndex={activeBox} chunk={chunks[activeBox] ?? '000000'} outputBits={outputs[activeBox] ?? '0000'} />
       </div>
+
+      <SBoxOutputGrid outputs={outputs} />
     </div>
   );
 }
 
 function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  const [activeOutputIndex, setActiveOutputIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const activeInputIndex = DES_PERMUTATION_P_TABLE[activeOutputIndex] - 1;
+
+  useEffect(() => {
+    setActiveOutputIndex(0);
+    setIsPlaying(false);
+  }, [bits.sboxOutput, bits.permutationOutput]);
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveOutputIndex((current) => {
+        if (current >= DES_PERMUTATION_P_TABLE.length - 1) {
+          setIsPlaying(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 700);
+
+    return () => window.clearInterval(timer);
+  }, [isPlaying]);
+
+  const start = () => {
+    setActiveOutputIndex((current) => (current >= DES_PERMUTATION_P_TABLE.length - 1 ? 0 : current));
+    setIsPlaying(true);
+  };
+
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-3 xl:col-span-2">
         <div className="rounded-[14px] border border-[#A5F3FC] bg-[#ECFEFF] px-4 py-3">
           <p className="text-[12px] text-[#0E7490]" style={{ lineHeight: 1.65 }}>
             Setelah S-Box, bit-bit yang berubah masih berkelompok. Permutasi P menyebarkannya ke posisi berbeda sehingga di ronde berikutnya, setiap S-Box mendapat input dari S-Box yang berbeda. Ini disebut difusi lintas blok.
           </p>
         </div>
-        <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" />
-        <MappingTable table={DES_PERMUTATION_P_TABLE} inputBits={bits.sboxOutput} outputBits={bits.permutationOutput} label="Tabel Permutasi P" columns={8} mappingOnly />
       </div>
-      <div className="space-y-3">
-        <BitGrid bits={bits.permutationOutput} label="Output P / F(R,K) (32 bit)" />
-        <InfoBox step={roundSteps[4]} />
+      <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+        <div className="space-y-3">
+          <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" activeIndexes={[activeInputIndex]} />
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              onClick={isPlaying ? () => setIsPlaying(false) : start}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#0891B2] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#0E7490]"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isPlaying ? 'Pause' : 'Mulai'}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <MappingTable
+            table={DES_PERMUTATION_P_TABLE}
+            inputBits={bits.sboxOutput}
+            outputBits={bits.permutationOutput}
+            label="Tabel Permutasi P"
+            columns={8}
+            mappingOnly
+            activeIndex={activeOutputIndex}
+            onSelectIndex={(index) => {
+              setIsPlaying(false);
+              setActiveOutputIndex(index);
+            }}
+          />
+          <div className="rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#64748B]">
+            Output bit ke-{activeOutputIndex + 1} mengambil input S-Box posisi {DES_PERMUTATION_P_TABLE[activeOutputIndex]}.
+          </div>
+        </div>
+      </div>
+      <div className="xl:col-span-2">
+        <div className="mx-auto w-full max-w-[620px]">
+          <BitGrid bits={bits.permutationOutput} label="Output P / F(R,K) (32 bit)" activeIndexes={[activeOutputIndex]} />
+        </div>
       </div>
     </>
   );
@@ -826,67 +1011,120 @@ function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
 
 function OutputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
   const labels = getLabels(round);
-  const changedIndexes = bits.outputChanged.map((changed, index) => (changed ? index : -1)).filter((index) => index >= 0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const activeLeftBit = bits.leftInput[activeIndex] ?? '0';
+  const activeFunctionBit = bits.permutationOutput[activeIndex] ?? '0';
+  const activeResultBit = bits.rightOutput[activeIndex] ?? (activeLeftBit === activeFunctionBit ? '0' : '1');
+
+  useEffect(() => {
+    setActiveIndex(0);
+    setIsPlaying(false);
+  }, [bits.leftInput, bits.permutationOutput, bits.rightOutput]);
+
+  useEffect(() => {
+    if (!isPlaying) return undefined;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => {
+        if (current >= bits.rightOutput.length - 1) {
+          setIsPlaying(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 900);
+
+    return () => window.clearInterval(timer);
+  }, [bits.rightOutput.length, isPlaying]);
+
+  const start = () => {
+    setActiveIndex((current) => (current >= bits.rightOutput.length - 1 ? 0 : current));
+    setIsPlaying(true);
+  };
 
   return (
     <>
-      <div className="space-y-3">
-        <BitGrid
-          bits={bits.leftInput}
-          label={`${labels.leftIn} lama`}
-          changedIndexes={changedIndexes}
-        />
-        <div className="flex justify-center">
-          <span className="rounded-full border border-[#FECDD3] bg-[#FFF1F2] px-3 py-1 font-mono text-[12px] font-semibold text-[#BE123C]">
-            XOR
-          </span>
+      <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+        <BitGrid bits={bits.leftInput} label={`${labels.leftIn} lama`} activeIndexes={[activeIndex]} />
+        <BitGrid bits={bits.permutationOutput} label={`F(${labels.rightIn}, ${labels.subkey})`} activeIndexes={[activeIndex]} />
+      </div>
+
+      <div className="xl:col-span-2">
+        <div className="rounded-[16px] border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[13px] font-semibold text-[#1D4ED8]">Animasi XOR bit ke-{activeIndex + 1}</div>
+            <button
+              type="button"
+              onClick={isPlaying ? () => setIsPlaying(false) : start}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isPlaying ? 'Pause' : 'Mulai'}
+            </button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[minmax(120px,0.8fr)_auto_minmax(120px,0.8fr)_auto_minmax(120px,0.8fr)] md:items-center">
+            <motion.div
+              key={`output-left-${activeIndex}`}
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.02, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+              className="rounded-[10px] bg-[#2563EB] px-3 py-2.5 text-center text-white shadow-[0_8px_18px_rgba(37,99,235,0.20)] ring-2 ring-[#93C5FD]"
+            >
+              <div className="text-[10px] font-semibold text-white/85">{labels.leftIn}</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeLeftBit}</div>
+            </motion.div>
+            <div className="text-center text-[12px] font-semibold text-[#1D4ED8]">XOR</div>
+            <motion.div
+              key={`output-f-${activeIndex}`}
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.02, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.08 }}
+              className="rounded-[10px] bg-[#1D4ED8] px-3 py-2.5 text-center text-white shadow-[0_8px_18px_rgba(29,78,216,0.20)] ring-2 ring-[#93C5FD]"
+            >
+              <div className="text-[10px] font-semibold text-white/85">F</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeFunctionBit}</div>
+            </motion.div>
+            <div className="text-center text-[12px] font-semibold text-[#1D4ED8]">=</div>
+            <motion.div
+              key={`output-result-${activeIndex}`}
+              initial={{ scale: 0.98, opacity: 0.9 }}
+              animate={{ scale: 1.03, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.16 }}
+              className="rounded-[10px] bg-[#1E40AF] px-3 py-2.5 text-center text-white shadow-[0_9px_20px_rgba(30,64,175,0.22)] ring-2 ring-[#93C5FD]"
+            >
+              <div className="text-[10px] font-semibold text-white/85">Hasil</div>
+              <div className="mt-1 font-mono text-[26px] font-semibold text-white">{activeResultBit}</div>
+            </motion.div>
+          </div>
         </div>
-        <BitGrid bits={bits.permutationOutput} label={`F(${labels.rightIn}, ${labels.subkey})`} changedIndexes={changedIndexes} />
-        <div className="flex justify-center">
-          <span className="rounded-full border border-[#FECDD3] bg-[#FFF1F2] px-3 py-1 font-mono text-[12px] font-semibold text-[#BE123C]">
-            =
-          </span>
-        </div>
+      </div>
+
+      <div className="xl:col-span-2">
         <BitGrid
           bits={bits.rightOutput}
           label={`${labels.rightOut} = ${labels.leftIn} XOR F`}
-          changedIndexes={changedIndexes}
-          note={`${labels.rightOut} tetap menjadi ${labels.rightOut} dan akan dipakai pada ronde berikutnya.`}
+          activeIndexes={[activeIndex]}
+          note={`${labels.rightOut} digunakan sebagai sisi kanan pada ronde berikutnya.`}
           large
         />
       </div>
-      <div className="space-y-3">
+
+      <div className="grid gap-3 md:grid-cols-2 xl:col-span-2">
         <BitGrid
           bits={bits.leftOutput}
           label={`${labels.leftOut} = ${labels.rightIn}`}
-          note={`${labels.rightIn} di-swap menjadi ${labels.leftOut}. Nilai ${labels.leftOut} ini akan digunakan pada ronde berikutnya.`}
+          note={`${labels.rightIn} lama disalin menjadi ${labels.leftOut}.`}
         />
-        <div className="rounded-[14px] border border-[#FECDD3] bg-white p-4">
-          <div className="mb-3 text-[12px] font-semibold text-[#BE123C]">Formula ronde Feistel</div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded-[10px] bg-[#EFF6FF] px-3 py-2 font-mono text-[13px] font-semibold text-[#1D4ED8]">
-              L{round.round} = R{round.round - 1}
-            </div>
-            <div className="rounded-[10px] bg-[#FFF1F2] px-3 py-2 font-mono text-[13px] font-semibold text-[#BE123C]">
-              R{round.round} = L{round.round - 1} xor F(R{round.round - 1}, K{round.round})
-            </div>
+        <div className="grid gap-2">
+          <div className="rounded-[10px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 font-mono text-[13px] font-semibold text-[#1D4ED8]">
+            {labels.leftOut} = {labels.rightIn}
           </div>
-          <p className="mt-3 text-[12px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
-            Struktur Feistel ini brilian karena dekripsi DES cukup menjalankan ronde yang sama dengan urutan subkey dibalik. Function F tidak perlu bisa dibalik.
-          </p>
-        </div>
-        <div className="rounded-[14px] border border-[#FECDD3] bg-[#FFF1F2] p-4">
-          <div className="mb-3 flex items-center gap-2 text-[12px] font-semibold text-[#BE123C]">
-            <Shuffle className="h-4 w-4" />
-            Swap ronde
-          </div>
-          <div className="flex flex-col gap-2 text-[12px] text-[#475569] sm:flex-row sm:items-center">
-            <span className="rounded-[9px] bg-white px-3 py-2 font-mono ring-1 ring-[#E2E8F0]">{labels.leftOut} = {labels.rightIn}</span>
-            <ArrowRight className="hidden h-4 w-4 text-[#94A3B8] sm:block" />
-            <span className="rounded-[9px] bg-white px-3 py-2 font-mono ring-1 ring-[#E2E8F0]">{labels.rightOut} = {labels.leftIn} XOR F</span>
+          <div className="rounded-[10px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 font-mono text-[13px] font-semibold text-[#1D4ED8]">
+            {labels.rightOut} = {labels.leftIn} XOR F
           </div>
         </div>
-        <InfoBox step={roundSteps[5]} />
       </div>
     </>
   );
@@ -938,6 +1176,11 @@ function StepContent({
               Langkah {activeStep + 1}/6
             </div>
             <h3 className="mt-2 text-[18px] font-semibold text-[#0F172A]">{step.title}</h3>
+            {step.id === 'output' && (
+              <p className="mt-1.5 max-w-[680px] text-[13px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
+                Di akhir ronde, {getLabels(round).leftIn} lama di-XOR dengan hasil Function F untuk membentuk {getLabels(round).rightOut}. Sementara itu, {getLabels(round).rightIn} lama langsung disalin menjadi {getLabels(round).leftOut}; inilah swap Feistel yang membuat sisi kiri dan kanan saling bertukar peran.
+              </p>
+            )}
           </div>
           <div className={`w-fit rounded-[10px] border px-3 py-2 text-[12px] font-semibold ${toneClass[step.tone].active}`}>{step.size}</div>
         </div>

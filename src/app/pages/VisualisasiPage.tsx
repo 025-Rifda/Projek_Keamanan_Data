@@ -189,22 +189,28 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
   const hasPaddingChar = chars.some((char) => char === '\0');
   const [activeCharIndex, setActiveCharIndex] = useState(0);
   const [activeKeyCharIndex, setActiveKeyCharIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isKeyPlaying, setIsKeyPlaying] = useState(false);
 
   useEffect(() => {
+    if (!isPlaying) return undefined;
+
     const timer = window.setInterval(() => {
       setActiveCharIndex((current) => (current + 1) % chars.length);
     }, 1400);
 
     return () => window.clearInterval(timer);
-  }, [chars.length]);
+  }, [chars.length, isPlaying]);
 
   useEffect(() => {
+    if (!isKeyPlaying) return undefined;
+
     const timer = window.setInterval(() => {
       setActiveKeyCharIndex((current) => (current + 1) % keyChars.length);
     }, 1400);
 
     return () => window.clearInterval(timer);
-  }, [keyChars.length]);
+  }, [isKeyPlaying, keyChars.length]);
 
   const activeChar = chars[activeCharIndex] ?? '\0';
   const activeCharLabel = activeChar === '\0' ? 'posisi kosong' : activeChar === ' ' ? 'spasi' : activeChar;
@@ -263,7 +269,17 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
         />
 
         <div className="mb-4 rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-4">
-          <div className="mb-3 text-[12px] font-semibold text-[#1D4ED8]">Animasi karakter ke biner</div>
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[12px] font-semibold text-[#1D4ED8]">Animasi karakter ke biner</div>
+            <button
+              type="button"
+              onClick={() => setIsPlaying((current) => !current)}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-3 py-2 text-[12px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+            >
+              {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              {isPlaying ? 'Pause' : 'Mulai'}
+            </button>
+          </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1.4fr] md:items-center">
             <div className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#BFDBFE]">
               <div className="text-[10px] font-semibold text-[#64748B]">Karakter</div>
@@ -309,7 +325,17 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
 
         <div className="mb-3 text-[11px] font-medium text-[#64748B]">Konversi key ke 64 bit</div>
         <div className="mb-4 rounded-[14px] border border-[#C4B5FD] bg-[#F5F3FF] p-4">
-          <div className="mb-3 text-[12px] font-semibold text-[#6D28D9]">Animasi key ke biner</div>
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[12px] font-semibold text-[#6D28D9]">Animasi key ke biner</div>
+            <button
+              type="button"
+              onClick={() => setIsKeyPlaying((current) => !current)}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#7C3AED] px-3 py-2 text-[12px] font-medium text-white transition-colors hover:bg-[#6D28D9]"
+            >
+              {isKeyPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              {isKeyPlaying ? 'Pause' : 'Mulai'}
+            </button>
+          </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1.4fr] md:items-center">
             <div className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#C4B5FD]">
               <div className="text-[10px] font-semibold text-[#64748B]">Karakter</div>
@@ -872,6 +898,13 @@ function Step3StoryVisual({
 }) {
   const [stageIndex, setStageIndex] = useState(0);
   const [hoverMessage, setHoverMessage] = useState('');
+  const [isSplitPlaying, setIsSplitPlaying] = useState(false);
+  const [splitActiveIndex, setSplitActiveIndex] = useState(-1);
+  const [splitRunId, setSplitRunId] = useState(0);
+  const [isMergePlaying, setIsMergePlaying] = useState(false);
+  const [mergeActiveIndex, setMergeActiveIndex] = useState(-1);
+  const [isPc2Playing, setIsPc2Playing] = useState(false);
+  const [pc2ActiveOutputIndex, setPc2ActiveOutputIndex] = useState(-1);
   const schedule = details.keySchedule[currentRound - 1];
   const previousSchedule = details.keySchedule[currentRound - 2];
   const c0 = details.keyAfterPc1.slice(0, 28);
@@ -916,12 +949,88 @@ function Step3StoryVisual({
     { title: 'Split', short: 'Split', text: '56 bit dibelah tepat di tengah: 28 bit kiri menjadi C0, 28 bit kanan menjadi D0.' },
     { title: 'Left Shift', short: 'Shift', text: 'C dan D diputar ke kiri. Rotasi ini membuat bahan subkey tiap ronde berbeda.' },
     { title: 'Merge', short: 'Merge', text: `C${currentRound} dan D${currentRound} disatukan lagi menjadi 56 bit.` },
-    { title: 'PC-2', short: 'PC-2', text: 'PC-2 memilih 48 bit sekaligus menyusun ulang urutannya. Nomor # pada bit menunjukkan posisi output K.' },
+    { title: 'PC-2', short: 'PC-2', text: 'PC-2 memilih 48 bit sekaligus menyusun ulang urutannya. Sel aktif menunjukkan posisi output K yang sedang dibentuk.' },
     { title: `K${currentRound} Generated`, short: `K${currentRound}`, text: `48 bit terpilih menjadi K${currentRound}. Subkey ini dipakai pada ronde DES ke-${currentRound}.` },
   ];
   const activeStage = stages[stageIndex];
 
   const goToStage = (index: number) => setStageIndex(Math.max(0, Math.min(index, stages.length - 1)));
+
+  useEffect(() => {
+    setIsSplitPlaying(false);
+    setSplitActiveIndex(-1);
+    setIsMergePlaying(false);
+    setMergeActiveIndex(-1);
+    setIsPc2Playing(false);
+    setPc2ActiveOutputIndex(-1);
+  }, [currentRound, stageIndex]);
+
+  useEffect(() => {
+    if (!isSplitPlaying) return undefined;
+
+    const timer = window.setInterval(() => {
+      setSplitActiveIndex((current) => {
+        if (current >= details.keyAfterPc1.length - 1) {
+          setIsSplitPlaying(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 420);
+
+    return () => window.clearInterval(timer);
+  }, [details.keyAfterPc1.length, isSplitPlaying]);
+
+  useEffect(() => {
+    if (!isMergePlaying) return undefined;
+
+    const timer = window.setInterval(() => {
+      setMergeActiveIndex((current) => {
+        if (current >= schedule.combined.length - 1) {
+          setIsMergePlaying(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 420);
+
+    return () => window.clearInterval(timer);
+  }, [isMergePlaying, schedule.combined.length]);
+
+  useEffect(() => {
+    if (!isPc2Playing) return undefined;
+
+    const timer = window.setInterval(() => {
+      setPc2ActiveOutputIndex((current) => {
+        if (current >= pc2Table.length - 1) {
+          setIsPc2Playing(false);
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 620);
+
+    return () => window.clearInterval(timer);
+  }, [isPc2Playing, pc2Table.length]);
+
+  const startSplit = () => {
+    setSplitRunId((current) => current + 1);
+    setSplitActiveIndex(0);
+    setIsSplitPlaying(true);
+  };
+
+  const startMerge = () => {
+    setMergeActiveIndex(0);
+    setIsMergePlaying(true);
+  };
+
+  const startPc2 = () => {
+    setPc2ActiveOutputIndex((current) => (current >= pc2Table.length - 1 ? 0 : Math.max(current, 0)));
+    setIsPc2Playing(true);
+  };
 
   const Bit = ({
     bit,
@@ -954,11 +1063,6 @@ function Step3StoryVisual({
         className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${selected ? toneClass : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#CBD5E1]'}`}
       >
         {bit}
-        {outputIndex !== undefined && (
-          <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] font-semibold leading-[14px] text-white ring-2 ring-white">
-            #{outputIndex}
-          </span>
-        )}
       </motion.div>
     );
   };
@@ -1017,7 +1121,119 @@ function Step3StoryVisual({
     </div>
   );
 
-  const StoryCard = ({ children }: { children: ReactNode }) => (
+  const AnimatedBitGrid = ({
+    bits,
+    columns = 'grid-cols-7',
+    tone = 'blue',
+    activeIndex = -1,
+    revealUntil,
+    offset = 0,
+  }: {
+    bits: string;
+    columns?: string;
+    tone?: 'blue' | 'green' | 'purple' | 'slate';
+    activeIndex?: number;
+    revealUntil?: number;
+    offset?: number;
+  }) => {
+    const toneClass = {
+      blue: 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]',
+      green: 'bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]',
+      purple: 'bg-[#F5F3FF] border-[#DDD6FE] text-[#6D28D9]',
+      slate: 'bg-white border-[#CBD5E1] text-[#475569]',
+    }[tone];
+
+    return (
+      <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
+        {bits.split('').map((bit, index) => {
+          const globalIndex = index + offset;
+          const isActive = globalIndex === activeIndex;
+          const isVisible = revealUntil === undefined || globalIndex <= revealUntil;
+          return (
+            <motion.div
+              key={`animated-${tone}-${globalIndex}-${bit}`}
+              initial={false}
+              animate={{ scale: isActive ? 1.14 : 1, opacity: isVisible ? 1 : 0.14 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+                isActive
+                  ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_22px_rgba(37,99,235,0.24)]'
+                  : toneClass
+              }`}
+            >
+              {isVisible ? bit : ''}
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderPc2InputGrid = () => {
+    const activeInputPosition = pc2ActiveOutputIndex >= 0 ? pc2Table[pc2ActiveOutputIndex] : null;
+
+    return (
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        {schedule.combined.split('').map((bit, index) => {
+          const position = index + 1;
+          const selected = pc2Selected.has(position);
+          const outputIndex = pc2OutputIndexByInput.get(position);
+          const isActive = activeInputPosition === position;
+
+          return (
+            <motion.div
+              key={`pc2-input-${position}-${bit}`}
+              animate={{ scale: isActive ? 1.12 : 1, opacity: selected ? 1 : 0.24 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+                isActive
+                  ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)]'
+                  : selected
+                    ? 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
+                    : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#CBD5E1]'
+              }`}
+              title={outputIndex ? `Input bit ke-${position} menjadi output bit ke-${outputIndex}` : `Input bit ke-${position} tidak dipilih PC-2`}
+            >
+              {bit}
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderPc2OutputGrid = () => (
+    <div className="grid grid-cols-6 gap-1">
+      {pc2Table.map((position, index) => {
+        const bit = pc2PickedBits[index];
+        const isActive = index === pc2ActiveOutputIndex;
+        const isRevealed = true;
+
+        return (
+          <motion.div
+            key={`pc2-output-${position}-${index}`}
+            animate={{ scale: isActive ? 1.1 : 1, opacity: isRevealed ? 1 : 0.2 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+            className={`flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border px-1 py-1.5 text-center font-mono ${
+              isActive
+                ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)]'
+                : bit === '1'
+                  ? 'border-[#BFDBFE] bg-[#DBEAFE] text-[#1E3A8A]'
+                  : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]'
+            }`}
+            title={`Bit output ke-${index + 1} = input bit ke-${position}`}
+          >
+            <span className={`text-[8px] font-medium leading-none ${isActive ? 'text-white/80' : 'text-[#94A3B8]'}`}>
+              {index + 1}
+            </span>
+            <span className="mt-1 text-[12px] font-semibold leading-none">{isRevealed ? bit : ''}</span>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+
+  const renderStoryCard = (children: ReactNode) => (
     <motion.div
       key={`${stageIndex}-${currentRound}`}
       initial={{ opacity: 0, y: 16 }}
@@ -1119,8 +1335,7 @@ function Step3StoryVisual({
 
   const stageContent = () => {
     if (stageIndex === 0) {
-      return (
-        <StoryCard>
+      return renderStoryCard(<>
           <div className="mb-4">
             <div className="text-[18px] font-semibold text-[#0F172A]">Key utama masuk sebagai 64 bit</div>
             <p className="mt-1 text-[13px] text-[#64748B]">Jangan fokus menghafal bitnya. Anggap ini sebagai deretan kartu yang akan dipilih dan diputar.</p>
@@ -1131,13 +1346,11 @@ function Step3StoryVisual({
             </p>
           </div>
           <BitGrid bits={details.keyBits} columns="grid-cols-8" tone="blue" animated />
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 1) {
-      return (
-        <StoryCard>
+      return renderStoryCard(<>
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-[18px] font-semibold text-[#0F172A]">PC-1 membuang parity bit</div>
@@ -1168,52 +1381,77 @@ function Step3StoryVisual({
             mutedMessage="Bit parity ini dibuang agar key menjadi 56 bit."
             animated
           />
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 2) {
-      return (
-        <StoryCard>
+      return renderStoryCard(<>
           <div className="mb-4">
             <div className="text-[18px] font-semibold text-[#0F172A]">Hasil PC-1: key 56 bit</div>
             <p className="mt-1 text-[13px] text-[#64748B]">Ini adalah bahan baru yang akan dibelah menjadi dua setengah bagian.</p>
           </div>
           <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="blue" animated />
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 3) {
-      return (
-        <StoryCard>
-          <div className="mb-5">
-            <div className="text-[18px] font-semibold text-[#0F172A]">56 bit dibelah tepat di tengah</div>
-            <p className="mt-1 text-[13px] text-[#64748B]">Bagian kiri menjadi C0. Bagian kanan menjadi D0. Dari sinilah shift akan bekerja.</p>
+      const splitHasStarted = splitActiveIndex >= 0;
+      const splitActiveTarget = splitActiveIndex < 28 ? 'C0' : 'D0';
+      const splitActiveLocalPosition = splitActiveIndex < 28 ? splitActiveIndex + 1 : splitActiveIndex - 27;
+
+      return renderStoryCard(<>
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="text-[18px] font-semibold text-[#0F172A]">56 bit dibelah tepat di tengah</div>
+              <p className="mt-1 text-[13px] text-[#64748B]">Bagian kiri menjadi C0. Bagian kanan menjadi D0. Dari sinilah shift akan bekerja.</p>
+            </div>
+            <button
+              type="button"
+              onClick={isSplitPlaying ? () => setIsSplitPlaying(false) : startSplit}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+            >
+              {isSplitPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isSplitPlaying ? 'Pause' : 'Mulai'}
+            </button>
           </div>
           <div className="relative mb-4 rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
             <div className="absolute bottom-4 left-1/2 top-4 w-px bg-[#CBD5E1]" />
-            <BitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="blue" />
+            <AnimatedBitGrid bits={details.keyAfterPc1} columns="grid-cols-7" tone="blue" activeIndex={splitActiveIndex} />
           </div>
+          {splitHasStarted && (
+            <div className="mb-4 rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[12px] text-[#1D4ED8]">
+              Bit input ke-{splitActiveIndex + 1} bergerak ke {splitActiveTarget} posisi {splitActiveLocalPosition}.
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.45 }} className="rounded-[16px] border border-[#DDD6FE] bg-[#F5F3FF] p-4">
+            <motion.div
+              key={`split-c0-${splitRunId}`}
+              initial={splitHasStarted ? { x: 80, opacity: 0.72 } : false}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              className="rounded-[16px] border border-[#DDD6FE] bg-[#F5F3FF] p-4"
+            >
               <div className="mb-2 text-[22px] font-semibold text-[#6D28D9]">C0</div>
               <div className="mb-3 text-[12px] text-[#7C3AED]">LEFT 28 BITS {'->'} C0</div>
-              <BitGrid bits={c0} columns="grid-cols-7" tone="purple" />
+              <AnimatedBitGrid bits={c0} columns="grid-cols-7" tone="purple" activeIndex={splitActiveIndex} />
             </motion.div>
-            <motion.div initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.45 }} className="rounded-[16px] border border-[#BBF7D0] bg-[#F0FDF4] p-4">
+            <motion.div
+              key={`split-d0-${splitRunId}`}
+              initial={splitHasStarted ? { x: -80, opacity: 0.72 } : false}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              className="rounded-[16px] border border-[#BBF7D0] bg-[#F0FDF4] p-4"
+            >
               <div className="mb-2 text-[22px] font-semibold text-[#15803D]">D0</div>
               <div className="mb-3 text-[12px] text-[#15803D]">RIGHT 28 BITS {'->'} D0</div>
-              <BitGrid bits={d0} columns="grid-cols-7" tone="green" />
+              <AnimatedBitGrid bits={d0} columns="grid-cols-7" tone="green" activeIndex={splitActiveIndex} offset={28} />
             </motion.div>
           </div>
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 4) {
-      return (
-        <StoryCard>
+      return renderStoryCard(<>
           <div className="mb-4">
             <div className="text-[18px] font-semibold text-[#0F172A]">C dan D diputar ke kiri</div>
             <p className="mt-1 text-[13px] text-[#64748B]">
@@ -1254,74 +1492,112 @@ function Step3StoryVisual({
             <ShiftRow label={`C${currentRound - 1} -> C${currentRound}`} before={beforeC} after={schedule.c} tone="purple" />
             <ShiftRow label={`D${currentRound - 1} -> D${currentRound}`} before={beforeD} after={schedule.d} tone="green" />
           </div>
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 5) {
-      return (
-        <StoryCard>
-          <div className="mb-4">
-            <div className="text-[18px] font-semibold text-[#0F172A]">C dan D disatukan kembali</div>
-            <p className="mt-1 text-[13px] text-[#64748B]">Setelah diputar, dua bagian ini digabung menjadi satu deretan 56 bit.</p>
+      const mergeHasStarted = mergeActiveIndex >= 0;
+      const mergeActiveSource = mergeActiveIndex < 28 ? `C${currentRound}` : `D${currentRound}`;
+      const mergeActiveLocalPosition = mergeActiveIndex < 28 ? mergeActiveIndex + 1 : mergeActiveIndex - 27;
+
+      return renderStoryCard(<>
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="text-[18px] font-semibold text-[#0F172A]">C dan D disatukan kembali</div>
+              <p className="mt-1 text-[13px] text-[#64748B]">Setelah diputar, dua bagian ini digabung menjadi satu deretan 56 bit.</p>
+            </div>
+            <button
+              type="button"
+              onClick={isMergePlaying ? () => setIsMergePlaying(false) : startMerge}
+              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+            >
+              {isMergePlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isMergePlaying ? 'Pause' : 'Mulai'}
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_1fr] md:items-center">
             <div className="rounded-[16px] border border-[#DDD6FE] bg-[#F5F3FF] p-4">
               <div className="mb-2 text-[13px] font-semibold text-[#6D28D9]">C{currentRound}</div>
-              <BitGrid bits={schedule.c} columns="grid-cols-7" tone="purple" />
+              <AnimatedBitGrid bits={schedule.c} columns="grid-cols-7" tone="purple" activeIndex={mergeActiveIndex} />
             </div>
             <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[#CBD5E1] bg-white text-[22px] font-semibold leading-none text-[#64748B] shadow-sm">
               +
             </div>
             <div className="rounded-[16px] border border-[#BBF7D0] bg-[#F0FDF4] p-4">
               <div className="mb-2 text-[13px] font-semibold text-[#15803D]">D{currentRound}</div>
-              <BitGrid bits={schedule.d} columns="grid-cols-7" tone="green" />
+              <AnimatedBitGrid bits={schedule.d} columns="grid-cols-7" tone="green" activeIndex={mergeActiveIndex} offset={28} />
             </div>
           </div>
+          {mergeHasStarted && (
+            <div className="mt-4 rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[12px] text-[#1D4ED8]">
+              Bit dari {mergeActiveSource} posisi {mergeActiveLocalPosition} masuk ke merged key posisi {mergeActiveIndex + 1}.
+            </div>
+          )}
           <motion.div initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-4 rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
             <div className="mb-2 text-[13px] font-semibold text-[#0F172A]">Merged 56-bit key</div>
-            <BitGrid bits={schedule.combined} columns="grid-cols-7" tone="slate" />
+            <AnimatedBitGrid bits={schedule.combined} columns="grid-cols-7" tone="slate" activeIndex={mergeActiveIndex} />
           </motion.div>
-        </StoryCard>
-      );
+        </>);
     }
 
     if (stageIndex === 6) {
-      return (
-        <StoryCard>
-          <div className="mb-4">
-            <div className="text-[18px] font-semibold text-[#0F172A]">PC-2 memilih bit untuk round key</div>
-            <p className="mt-1 text-[13px] text-[#64748B]">
-              PC-2 tidak hanya memilih 48 bit. Tabel PC-2 juga menentukan urutan baru: output bit ke-1 K{currentRound} berasal dari input bit ke-14, output bit ke-2 dari input bit ke-17, dan seterusnya.
-            </p>
+      const activePc2InputPosition = pc2ActiveOutputIndex >= 0 ? pc2Table[pc2ActiveOutputIndex] : null;
+      const activePc2Bit = pc2ActiveOutputIndex >= 0 ? pc2PickedBits[pc2ActiveOutputIndex] : null;
+
+      return renderStoryCard(<>
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-[18px] font-semibold text-[#0F172A]">PC-2 memilih bit untuk round key</div>
+              <p className="mt-1 text-[13px] text-[#64748B]">
+                PC-2 tidak hanya membuang 8 bit yang tidak dipakai. Bit-bit yang terpilih juga disusun ulang posisinya sesuai tabel, jadi subkey tiap ronde punya pola yang unik.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+              <button
+                type="button"
+                onClick={isPc2Playing ? () => setIsPc2Playing(false) : startPc2}
+                className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+              >
+                {isPc2Playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {isPc2Playing ? 'Pause' : 'Mulai'}
+              </button>
+            </div>
           </div>
-          <BitGrid
-            bits={schedule.combined}
-            columns="grid-cols-7"
-            tone="blue"
-            selectedPositions={pc2Selected}
-            selectedMessage="Bit ini dipilih oleh PC-2."
-            mutedMessage="Bit ini tidak digunakan untuk subkey ronde ini."
-            outputOrderMap={pc2OutputIndexByInput}
-            enableHover={false}
-          />
+          {renderPc2InputGrid()}
+          {activePc2InputPosition !== null && (
+            <div className="mt-4 rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[12px] text-[#1D4ED8]">
+              Output bit ke-{pc2ActiveOutputIndex + 1} K{currentRound} mengambil input bit ke-{activePc2InputPosition} dengan nilai <span className="font-mono font-semibold">{activePc2Bit}</span>.
+            </div>
+          )}
           <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr]">
             <div className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-3">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Tabel referensi</div>
               <div className="mb-2 text-[12px] font-semibold text-[#0F172A]">Tabel PC-2 DES</div>
               <div className="grid grid-cols-6 gap-1">
-                {pc2Table.map((position, index) => (
-                  <div
-                    key={`story-pc2-${position}-${index}`}
-                    className="relative rounded-[7px] border border-[#BFDBFE] bg-white px-1 py-2 text-center font-mono text-[11px] font-semibold text-[#1D4ED8]"
-                    title={`Output bit ke-${index + 1} mengambil input bit ke-${position}`}
-                  >
-                    {position}
-                    <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] leading-[13px] text-white ring-2 ring-[#F8FAFC]">
-                      #{index + 1}
-                    </span>
-                  </div>
-                ))}
+                {pc2Table.map((position, index) => {
+                  const isActive = index === pc2ActiveOutputIndex;
+
+                  return (
+                    <motion.button
+                      key={`story-pc2-${position}-${index}`}
+                      type="button"
+                      onClick={() => {
+                        setIsPc2Playing(false);
+                        setPc2ActiveOutputIndex(index);
+                      }}
+                      animate={{ scale: isActive ? 1.08 : 1 }}
+                      transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                      className={`rounded-[7px] border px-1 py-2 text-center font-mono text-[11px] font-semibold transition-colors ${
+                        isActive
+                          ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.24)]'
+                          : 'border-[#BFDBFE] bg-white text-[#1D4ED8] hover:bg-[#EFF6FF]'
+                      }`}
+                      title={`Output bit ke-${index + 1} mengambil input bit ke-${position}`}
+                    >
+                      {position}
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
             <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
@@ -1334,27 +1610,7 @@ function Step3StoryVisual({
                   {schedule.subkey}
                 </div>
               </div>
-              <div className="grid grid-cols-6 gap-1">
-                {pc2Table.map((position, index) => {
-                  const bit = pc2PickedBits[index];
-                  const bitTone = bit === '1'
-                    ? 'border-[#BFDBFE] bg-[#DBEAFE] text-[#1E3A8A]'
-                    : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]';
-
-                  return (
-                    <div
-                      key={`story-pc2-result-${position}-${index}`}
-                      className={`flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border px-1 py-1.5 text-center font-mono ${bitTone}`}
-                      title={`Bit output ke-${index + 1} = input bit ke-${position}`}
-                    >
-                      <span className="text-[8px] font-medium leading-none text-[#94A3B8]">
-                        #{index + 1}
-                      </span>
-                      <span className="mt-1 text-[12px] font-semibold leading-none">{bit}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {renderPc2OutputGrid()}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {subkeyBinaryGroups.map((bits, index) => (
                   <span
@@ -1377,16 +1633,14 @@ function Step3StoryVisual({
                 Output bit ke-2 berasal dari input bit ke-{pc2Table[1]}.
               </div>
               <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">
-                Nomor # pada grid menunjukkan posisi bit itu di output K{currentRound}.
+                Sel yang disorot menunjukkan output K{currentRound} yang sedang diisi.
               </div>
             </div>
           </div>
-        </StoryCard>
-      );
+        </>);
     }
 
-    return (
-      <StoryCard>
+    return renderStoryCard(<>
         <div className="mb-4">
           <div className="text-[18px] font-semibold text-[#0F172A]">K{currentRound} berhasil dibentuk</div>
           <p className="mt-1 text-[13px] text-[#64748B]">
@@ -1460,8 +1714,7 @@ function Step3StoryVisual({
             Sekarang kamu punya K{currentRound}. Di ronde Feistel ke-{currentRound}, subkey ini akan di-XOR dengan R yang sudah diperluas. Tanpa subkey yang berbeda tiap ronde, DES jauh lebih mudah dipecah.
           </p>
         </div>
-      </StoryCard>
-    );
+        </>);
   };
 
   return (
@@ -2486,3 +2739,4 @@ export function VisualisasiPage() {
     </div>
   );
 }
+
