@@ -473,7 +473,7 @@ export function EnkripsiPage() {
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Algoritma aktif</span>
+              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Algoritma</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <button

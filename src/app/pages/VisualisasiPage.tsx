@@ -333,6 +333,10 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
           {keyChars.map((char, index) => renderCharCard(char, index, keyAscii[index], keyBytes[index], 'purple'))}
         </div>
+        <div className="text-[11px] font-medium text-[#64748B] mb-2">Binary key (64 bit)</div>
+        <div className="bg-[#F5F3FF] border-[0.5px] border-[#C4B5FD] rounded-[10px] px-3 py-3 text-[12px] font-mono text-[#6D28D9] break-all mb-4">
+          {formatBinaryGroups(details.keyBits, 8)}
+        </div>
         <div className="rounded-[8px] border-[0.5px] border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[11px] text-[#92400E]">
           Key akan diproses lebih lanjut di Langkah 3 (Key Schedule) untuk menghasilkan 16 subkey berbeda.
         </div>
@@ -766,13 +770,6 @@ function Step2Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
           </button>
         </div>
 
-        <div className="mt-4 rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
-          <div className="text-[12px] font-semibold text-[#78350F]">Mengapa IP dilakukan?</div>
-          <p className="mt-1 text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-            IP menyebarkan bit dari awal sehingga perubahan kecil langsung memengaruhi banyak posisi. Ini membantu efek difusi sebelum data masuk ke ronde Feistel.
-          </p>
-        </div>
-
         {(selectedHalf || showDetail) && renderHexMapping()}
 
         {showDetail && (
@@ -1144,7 +1141,7 @@ function Step3StoryVisual({
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="text-[18px] font-semibold text-[#0F172A]">PC-1 membuang parity bit</div>
-              <p className="mt-1 text-[13px] text-[#64748B]">Bit yang redup tidak dibawa ke tahap berikutnya. Yang menyala menjadi 56-bit key.</p>
+              <p className="mt-1 text-[13px] text-[#64748B]">Bit kuning tidak dibawa ke tahap berikutnya. Yang menyala menjadi 56-bit key.</p>
             </div>
             <div className="rounded-full bg-[#EFF6FF] px-3 py-1 text-[12px] font-medium text-[#1D4ED8]">64 bit {'->'} 56 bit</div>
           </div>
@@ -1223,24 +1220,32 @@ function Step3StoryVisual({
               Round {currentRound} memakai left circular shift sebanyak {schedule.shift} bit. Bit paling kiri pindah ke belakang, bukan dibuang.
             </p>
           </div>
-          <div className="mb-4 rounded-[14px] border border-[#E2E8F0] bg-white p-3">
-            <div className="mb-2 text-[12px] font-semibold text-[#0F172A]">Shift schedule DES</div>
-            <p className="mb-3 text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
+          <div className="mb-4 rounded-[14px] border border-[#E2E8F0] bg-white p-4">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-[13px] font-semibold text-[#0F172A]">Shift schedule DES</div>
+              <div className="flex flex-wrap gap-2 text-[10px] font-medium">
+                <span className="rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-1 text-[#92400E]">1 bit</span>
+                <span className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-[#64748B]">2 bit</span>
+                <span className="rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-2.5 py-1 text-[#1D4ED8]">ronde aktif</span>
+              </div>
+            </div>
+            <p className="mb-4 text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
               Ronde 1, 2, 9, dan 16 hanya shift 1 bit agar rotasi key tidak terlalu cepat berulang. Ronde lain shift 2 bit agar posisi bit key lebih cepat menyebar.
             </p>
-            <div className="grid grid-cols-4 gap-1 sm:grid-cols-8 lg:grid-cols-16">
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(76px, 1fr))' }}>
               {details.keySchedule.map((item) => (
                 <div
                   key={`shift-note-${item.round}`}
-                  className={`rounded-[7px] border px-2 py-1 text-center text-[10px] font-semibold ${
+                  className={`flex min-h-[52px] flex-col items-center justify-center rounded-[10px] border px-2 py-2 text-center font-semibold transition-colors ${
                     item.round === currentRound
-                      ? 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]'
+                      ? 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] shadow-sm ring-1 ring-[#BFDBFE]'
                       : item.shift === 1
                         ? 'border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]'
                         : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]'
                   }`}
                 >
-                  R{item.round}: {item.shift}
+                  <span className="text-[11px] leading-none">Ronde {item.round}</span>
+                  <span className="mt-1 text-[13px] leading-none">{item.shift} bit</span>
                 </div>
               ))}
             </div>
@@ -1265,7 +1270,9 @@ function Step3StoryVisual({
               <div className="mb-2 text-[13px] font-semibold text-[#6D28D9]">C{currentRound}</div>
               <BitGrid bits={schedule.c} columns="grid-cols-7" tone="purple" />
             </div>
-            <ArrowRight className="mx-auto h-5 w-5 rotate-90 text-[#94A3B8] md:rotate-0" />
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[#CBD5E1] bg-white text-[22px] font-semibold leading-none text-[#64748B] shadow-sm">
+              +
+            </div>
             <div className="rounded-[16px] border border-[#BBF7D0] bg-[#F0FDF4] p-4">
               <div className="mb-2 text-[13px] font-semibold text-[#15803D]">D{currentRound}</div>
               <BitGrid bits={schedule.d} columns="grid-cols-7" tone="green" />
@@ -1494,22 +1501,23 @@ function Step3StoryVisual({
               K{currentRound} memakai left circular shift {schedule.shift} bit
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8 lg:grid-cols-16">
             {details.keySchedule.map((item) => (
               <button
                 key={item.round}
                 type="button"
+                title={`K${item.round} memakai shift ${item.shift} bit`}
                 onClick={() => {
                   setCurrentRound(item.round);
                   setStageIndex(0);
                 }}
-                className={`rounded-[8px] border px-2 py-2 text-[10px] font-semibold transition-colors ${
+                className={`rounded-[8px] border px-2 py-2 text-[12px] font-semibold transition-colors ${
                   item.round === currentRound
                     ? 'border-[#2563EB] bg-[#2563EB] text-white'
                     : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] hover:bg-[#EFF6FF]'
                 }`}
               >
-                K{item.round} (shift: {item.shift})
+                K{item.round}
               </button>
             ))}
           </div>
@@ -1589,13 +1597,6 @@ function Step3StoryVisual({
             Tahap Berikutnya
             <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
-
-        <div className="mt-4 rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
-          <div className="text-[12px] font-semibold text-[#78350F]">Kenapa Ini Penting?</div>
-          <p className="mt-1 text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-            DES membuat subkey berbeda di setiap ronde agar hubungan plaintext dan ciphertext lebih sulit ditebak.
-          </p>
         </div>
 
       </div>

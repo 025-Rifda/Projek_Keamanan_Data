@@ -1,6 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  ShieldCheck, Lock, Eye, ArrowRight, Sparkles,
+  ShieldCheck, Lock, ArrowRight, Sparkles,
   CheckCircle2, AlertCircle, Copy, Clock, Package,
   Rocket, Zap, BarChart3, BookOpen, Shield
 } from 'lucide-react';
@@ -82,32 +82,12 @@ export function LandingPage() {
               Aplikasi ini difokuskan untuk DES, lengkap dengan enkripsi, dekripsi, dan visualisasi langkah demi langkah yang mudah dipahami.
             </p>
 
-            <div className="flex gap-3 flex-wrap mb-8">
+            <div className="flex gap-3 flex-wrap">
               <button onClick={handleDESClick}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-[14px] text-white transition-all hover:-translate-y-0.5 active:translate-y-0"
                 style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)', boxShadow: '0 6px 28px rgba(37,99,235,0.35)' }}>
                 <Rocket className="w-4 h-4" /> Mulai Belajar DES
               </button>
-              <Link to="/visualisasi"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-[14px] text-slate-600 transition-all hover:bg-white hover:shadow-md"
-                style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(203,213,225,0.8)', backdropFilter: 'blur(8px)' }}>
-                <Eye className="w-4 h-4" /> Visualisasi
-              </Link>
-            </div>
-
-            {/* social proof */}
-            <div className="flex items-center gap-3">
-              <div className="flex">
-                {['#3B82F6','#06B6D4','#818CF8','#F472B6'].map((c, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold text-white"
-                    style={{ marginLeft: i === 0 ? 0 : '-8px', background: c }}>
-                    {['A','B','C','D'][i]}
-                  </div>
-                ))}
-              </div>
-              <p className="text-[12px] text-slate-500">
-                Bergabung dengan <span className="font-bold text-slate-700">1.250+</span> pelajar yang telah memahami DES
-              </p>
             </div>
           </motion.div>
 
@@ -191,7 +171,7 @@ export function LandingPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }}>
           <div className="flex items-center gap-2 mb-6">
             <Sparkles className="w-4 h-4 text-blue-500" />
-            <h2 className="text-[15px] font-bold text-slate-700">Kenapa Belajar DES?</h2>
+            <h2 className="text-[15px] font-bold text-slate-700">Kenapa Belajar DES di CryptoDES?</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

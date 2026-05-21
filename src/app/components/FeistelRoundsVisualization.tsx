@@ -142,10 +142,6 @@ function pseudoSubkeyBits(round: number) {
   return bits.slice(0, 48);
 }
 
-function shortBits(bits: string, count = 16) {
-  return `${bits.slice(0, count)}...`;
-}
-
 function getLabels(round: FeistelRoundData) {
   return {
     leftIn: `L${round.round - 1}`,
@@ -398,13 +394,13 @@ function RoundSelector({
             key={round}
             type="button"
             onClick={() => onSelectRound(round)}
-            className={`h-8 shrink-0 rounded-[9px] border px-3 text-[12px] font-semibold transition-colors ${
+            className={`h-8 min-w-[82px] shrink-0 rounded-[9px] border px-3 text-[12px] font-semibold transition-colors ${
               active
                 ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-sm'
                 : 'border-[#CBD5E1] bg-white text-[#475569] hover:border-[#2563EB] hover:text-[#1D4ED8]'
             }`}
           >
-            R{round}
+            Ronde {round}
           </button>
         );
       })}
@@ -415,23 +411,24 @@ function RoundSelector({
 function MetaBar({
   round,
   totalRounds,
-  bits,
 }: {
   round: FeistelRoundData;
   totalRounds: number;
-  bits: ReturnType<typeof useRoundBits>;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <div className="rounded-[9px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#475569]">Ronde {round.round}/{totalRounds}</div>
-      <div className="rounded-[9px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-[12px] text-[#1D4ED8]">
-        L{round.round - 1} pertama <span className="font-mono font-semibold">{shortBits(bits.leftInput, 10)}</span>
+      <div className="rounded-[9px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-[12px] text-[#64748B]">
+        Dipakai:
       </div>
-      <div className="rounded-[9px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[12px] text-[#15803D]">
-        R{round.round - 1} pertama <span className="font-mono font-semibold">{shortBits(bits.rightInput, 10)}</span>
+      <div className="rounded-[9px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 font-mono text-[12px] font-semibold text-[#1D4ED8]">
+        L{round.round - 1}
       </div>
-      <div className="rounded-[9px] border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[12px] text-[#92400E]">
-        K{round.round} <span className="font-mono font-semibold">{shortBits(bits.subkey, 10)}</span>
+      <div className="rounded-[9px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 font-mono text-[12px] font-semibold text-[#15803D]">
+        R{round.round - 1}
+      </div>
+      <div className="rounded-[9px] border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 font-mono text-[12px] font-semibold text-[#92400E]">
+        K{round.round}
       </div>
     </div>
   );
@@ -549,6 +546,11 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
     <>
       <div className="space-y-3">
         <FeistelDiagram round={round} />
+      </div>
+      <div className="space-y-3">
+        <FlowCard title={`Alur ronde ${round.round}`} rows={flowRows} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
         <div className="space-y-1.5">
           <BitGrid bits={bits.leftInput} label={`${labels.leftIn} - sisi kiri (32 bit)`} />
           <div className="rounded-[9px] border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-[11px] text-[#1D4ED8]">
@@ -561,9 +563,6 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
             {originNotes.right}
           </div>
         </div>
-      </div>
-      <div className="space-y-3">
-        <FlowCard title={`Alur ronde ${round.round}`} rows={flowRows} />
       </div>
     </>
   );
@@ -583,45 +582,91 @@ function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
           </p>
         </div>
         <BitGrid bits={bits.rightInput} label="Input R (32 bit), bit kuning disalin dua kali" changedIndexes={duplicateInputIndexes} />
+      </div>
+      <div className="space-y-3">
         <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} mappingOnly />
         <div className="rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#64748B]">
           Contoh: <span className="font-mono font-semibold text-[#0F172A]">1&lt;-32</span> berarti output urutan ke-1 diambil dari input urutan ke-32.
         </div>
       </div>
-      <div className="space-y-3">
-        <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} />
-        <InfoBox step={roundSteps[1]} />
+      <div className="xl:col-span-2">
+        <div className="mx-auto w-full max-w-[620px]">
+          <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} />
+        </div>
       </div>
     </>
   );
 }
 
 function XorStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<typeof useRoundBits> }) {
+  const [activeBitIndex, setActiveBitIndex] = useState(0);
   const changedIndexes = bits.xorChanged.map((changed, index) => (changed ? index : -1)).filter((index) => index >= 0);
+  const activeExpansionBit = bits.expansion[activeBitIndex] ?? '0';
+  const activeSubkeyBit = bits.subkey[activeBitIndex] ?? '0';
+  const activeResultBit = bits.xorWithKey[activeBitIndex] ?? (activeExpansionBit === activeSubkeyBit ? '0' : '1');
+
+  useEffect(() => {
+    setActiveBitIndex(0);
+
+    const timer = window.setInterval(() => {
+      setActiveBitIndex((current) => (current + 1) % 48);
+    }, 1200);
+
+    return () => window.clearInterval(timer);
+  }, [bits.expansion, bits.subkey, bits.xorWithKey]);
 
   return (
     <>
-      <div className="space-y-3">
-        <div className="rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
-          <div className="mb-2 text-[12px] font-semibold text-[#78350F]">XOR dari nol</div>
-          <p className="text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-            XOR itu sederhana: 0 xor 0 = 0, 0 xor 1 = 1, 1 xor 0 = 1, 1 xor 1 = 0. Jika bit E(R) dan K sama, hasilnya 0; jika berbeda, hasilnya 1.
-          </p>
-          <div className="mt-3 grid grid-cols-4 gap-1 text-center font-mono text-[11px] font-semibold text-[#92400E]">
-            {['0 xor 0 = 0', '0 xor 1 = 1', '1 xor 0 = 1', '1 xor 1 = 0'].map((item) => (
-              <div key={item} className="rounded-[8px] bg-white px-2 py-2 ring-1 ring-[#FDE68A]">{item}</div>
-            ))}
+      <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+        <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
+        <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
+      </div>
+      <div className="xl:col-span-2">
+        <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] p-4">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[13px] font-semibold text-[#78350F]">Animasi XOR bit ke-{activeBitIndex + 1}</div>
+            <div className="text-[11px] text-[#92400E]">E(R) bertemu Subkey K{round.round}</div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+            <motion.div
+              key={`xor-er-${activeBitIndex}`}
+              initial={{ scale: 0.94, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+            >
+              <div className="text-[10px] font-semibold text-[#92400E]">E(R)</div>
+              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeExpansionBit}</div>
+            </motion.div>
+            <div className="text-center text-[12px] font-semibold text-[#92400E]">ketemu</div>
+            <motion.div
+              key={`xor-key-${activeBitIndex}`}
+              initial={{ scale: 0.94, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25, delay: 0.08 }}
+              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+            >
+              <div className="text-[10px] font-semibold text-[#92400E]">K{round.round}</div>
+              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeSubkeyBit}</div>
+            </motion.div>
+            <div className="text-center text-[12px] font-semibold text-[#92400E]">sama dengan</div>
+            <motion.div
+              key={`xor-result-${activeBitIndex}`}
+              initial={{ scale: 0.94, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25, delay: 0.16 }}
+              className="rounded-[12px] bg-white px-4 py-3 text-center ring-1 ring-[#FDE68A]"
+            >
+              <div className="text-[10px] font-semibold text-[#92400E]">Hasil</div>
+              <div className="mt-1 font-mono text-[30px] font-semibold text-[#B45309]">{activeResultBit}</div>
+            </motion.div>
           </div>
         </div>
-        <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} changedIndexes={changedIndexes} />
-        <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} changedIndexes={changedIndexes} />
-        <div className="rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-[12px] text-[#92400E]">
-          Subkey K "mewarnai" E(R) sehingga hasilnya bergantung pada kunci. Bit kuning adalah posisi saat E(R) dan K berbeda, sehingga hasil XOR berubah menjadi 1.
-        </div>
       </div>
-      <div className="space-y-3">
-        <BitGrid bits={bits.xorWithKey} label="E(R) XOR K (48 bit)" columns={6} changedIndexes={changedIndexes} />
-        <InfoBox step={roundSteps[2]} />
+      <div className="xl:col-span-2">
+        <div className="mx-auto w-full max-w-[620px]">
+          <BitGrid bits={bits.xorWithKey} label="Hasil E(R) XOR K (48 bit)" columns={6} changedIndexes={changedIndexes} activeIndexes={[activeBitIndex]} />
+        </div>
       </div>
     </>
   );
@@ -973,7 +1018,7 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
       <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-4 shadow-sm">
         <RoundSelector totalRounds={totalRounds} currentRound={currentData.round} onSelectRound={selectRound} />
         <div className="mt-4">
-          <MetaBar round={currentData} totalRounds={totalRounds} bits={bits} />
+          <MetaBar round={currentData} totalRounds={totalRounds} />
         </div>
       </div>
       <StepTabs activeIndex={activeStep} onSelect={setActiveStep} />
@@ -991,11 +1036,11 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
           className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#0F172A] transition-colors hover:bg-[#F8FAFC] disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" />
-          Previous
+          Tahap Sebelumnya
         </button>
         <div className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] text-[#64748B]">
           <KeyRound className="h-4 w-4 text-[#F59E0B]" />
-          {roundSteps[activeStep].tab} pada R{currentData.round}
+          {roundSteps[activeStep].tab} pada Ronde {currentData.round}
         </div>
         <button
           type="button"
@@ -1003,7 +1048,7 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
           disabled={currentData.round === totalRounds && activeStep === roundSteps.length - 1}
           className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1D4ED8] disabled:opacity-40"
         >
-          {activeStep === roundSteps.length - 1 && currentData.round < totalRounds ? `R${currentData.round + 1}` : 'Next'}
+          {activeStep === roundSteps.length - 1 && currentData.round < totalRounds ? `Ronde ${currentData.round + 1}` : 'Tahap Berikutnya'}
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
