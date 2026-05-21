@@ -51,8 +51,6 @@ const stepData = [
     slug: 'split-l0-r0',
     title: 'Initial Permutation (IP)',
     subtitle: '64 bit plaintext diatur ulang sesuai tabel IP tanpa mengubah nilainya.',
-    analogy: 'Bit-bit ini seperti 64 orang yang diminta pindah posisi mengikuti daftar kursi baru.',
-    why: 'Permutasi awal menyebarkan posisi bit sejak awal agar difusi DES dimulai sebelum ronde pertama.',
     tagColor: { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D' },
   },
   {
@@ -2064,23 +2062,7 @@ export function VisualisasiPage() {
             {step.subtitle}
           </p>
         </div>
-
-        <div className="bg-[#FFFBEB] border-[0.5px] border-[#FDE68A] rounded-[10px] px-3.5 py-3 mb-3 flex gap-2.5">
-          <Lightbulb className="w-5 h-5 text-[#F59E0B] flex-shrink-0" />
-          <div>
-            <div className="text-[12px] font-medium text-[#78350F] mb-1">Analogi:</div>
-            <p className="text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
-              {step.analogy}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-[#F8FAFC] border-[0.5px] border-[#E2E8F0] rounded-[8px] px-3 py-2.5 mt-2 mb-3">
-          <div className="text-[12px] font-medium text-[#0F172A] mb-1">Kenapa perlu dilakukan?</div>
-          <p className="text-[12px] text-[#64748B]" style={{ lineHeight: 1.6 }}>
-            {step.why}
-          </p>
-        </div>
+    
 
         {!plaintext && !key ? (
           <StepStateNotice
