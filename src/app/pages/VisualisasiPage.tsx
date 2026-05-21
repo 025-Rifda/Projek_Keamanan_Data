@@ -976,6 +976,7 @@ function Step3StoryVisual({
     mutedMessage,
     animated = false,
     outputOrderMap,
+    enableHover = true,
   }: {
     bits: string;
     columns?: string;
@@ -987,6 +988,7 @@ function Step3StoryVisual({
     mutedMessage?: string;
     animated?: boolean;
     outputOrderMap?: Map<number, number>;
+    enableHover?: boolean;
   }) => (
     <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
       {bits.split('').map((bit, index) => {
@@ -997,14 +999,18 @@ function Step3StoryVisual({
         return (
           <div
             key={`${bit}-${index}-${position}`}
-            onMouseEnter={() => {
-              if (outputIndex !== undefined) {
-                setHoverMessage(`Output bit ke-${outputIndex} K${currentRound} berasal dari input bit ke-${position}.`);
-                return;
-              }
-              setHoverMessage(isParity ? 'Bit parity ini dipakai untuk error checking dan dibuang oleh PC-1.' : selected ? selectedMessage ?? '' : mutedMessage ?? '');
-            }}
-            onMouseLeave={() => setHoverMessage('')}
+            onMouseEnter={
+              enableHover
+                ? () => {
+                    if (outputIndex !== undefined) {
+                      setHoverMessage(`Output bit ke-${outputIndex} K${currentRound} berasal dari input bit ke-${position}.`);
+                      return;
+                    }
+                    setHoverMessage(isParity ? 'Bit parity ini dipakai untuk error checking dan dibuang oleh PC-1.' : selected ? selectedMessage ?? '' : mutedMessage ?? '');
+                  }
+                : undefined
+            }
+            onMouseLeave={enableHover ? () => setHoverMessage('') : undefined}
           >
             <Bit bit={bit} selected={selected || isParity} tone={isParity ? 'amber' : tone} index={index} animated={animated} outputIndex={outputIndex} />
           </div>
@@ -1289,32 +1295,67 @@ function Step3StoryVisual({
             selectedMessage="Bit ini dipilih oleh PC-2."
             mutedMessage="Bit ini tidak digunakan untuk subkey ronde ini."
             outputOrderMap={pc2OutputIndexByInput}
-            animated
+            enableHover={false}
           />
           <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr]">
             <div className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Tabel referensi</div>
               <div className="mb-2 text-[12px] font-semibold text-[#0F172A]">Tabel PC-2 DES</div>
               <div className="grid grid-cols-6 gap-1">
                 {pc2Table.map((position, index) => (
                   <div
                     key={`story-pc2-${position}-${index}`}
-                    className="relative rounded-[7px] border border-[#BFDBFE] bg-white px-1 py-2 text-center font-mono text-[11px] font-semibold text-[#1D4ED8]"
+                    className="flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border border-[#E2E8F0] bg-white px-1 py-1.5 text-center font-mono"
                     title={`Output bit ke-${index + 1} mengambil input bit ke-${position}`}
                   >
-                    {position}
-                    <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] leading-[13px] text-white ring-2 ring-[#F8FAFC]">
+                    <span className="text-[8px] font-medium leading-none text-[#94A3B8]">
                       #{index + 1}
                     </span>
+                    <span className="mt-1 text-[11px] font-semibold leading-none text-[#334155]">{position}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
-              <div className="mb-2 text-[12px] font-semibold text-[#1D4ED8]">Cara membaca mapping</div>
-              <div className="space-y-2 text-[12px] text-[#1D4ED8]">
-                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Output bit ke-1 K{currentRound} berasal dari input bit ke-{pc2Table[0]}.</div>
-                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Output bit ke-2 berasal dari input bit ke-{pc2Table[1]}.</div>
-                <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">Nomor # pada grid menunjukkan posisi bit itu di output K{currentRound}.</div>
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Hasil bit</div>
+                  <div className="text-[12px] font-semibold text-[#1D4ED8]">Hasil PC-2 sesuai urutan tabel</div>
+                </div>
+                <div className="rounded-full bg-white px-2 py-1 font-mono text-[10px] font-semibold text-[#1D4ED8] ring-1 ring-[#BFDBFE]">
+                  {schedule.subkey}
+                </div>
+              </div>
+              <div className="grid grid-cols-6 gap-1">
+                {pc2Table.map((position, index) => {
+                  const bit = pc2PickedBits[index];
+                  const bitTone = bit === '1'
+                    ? 'border-[#BFDBFE] bg-[#DBEAFE] text-[#1E3A8A]'
+                    : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]';
+
+                  return (
+                    <div
+                      key={`story-pc2-result-${position}-${index}`}
+                      className={`flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border px-1 py-1.5 text-center font-mono ${bitTone}`}
+                      title={`Bit output ke-${index + 1} = input bit ke-${position}`}
+                    >
+                      <span className="text-[8px] font-medium leading-none text-[#94A3B8]">
+                        #{index + 1}
+                      </span>
+                      <span className="mt-1 text-[12px] font-semibold leading-none">{bit}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {subkeyBinaryGroups.map((bits, index) => (
+                  <span
+                    key={`story-pc2-byte-${index}-${bits}`}
+                    className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] font-semibold text-[#0F172A] ring-1 ring-[#BFDBFE]"
+                  >
+                    {bits}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
