@@ -757,7 +757,7 @@ function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
           </p>
         </div>
         <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" />
-        <MappingTable table={DES_PERMUTATION_P_TABLE} inputBits={bits.sboxOutput} outputBits={bits.permutationOutput} label="Tabel Permutasi P" columns={8} />
+        <MappingTable table={DES_PERMUTATION_P_TABLE} inputBits={bits.sboxOutput} outputBits={bits.permutationOutput} label="Tabel Permutasi P" columns={8} mappingOnly />
       </div>
       <div className="space-y-3">
         <BitGrid bits={bits.permutationOutput} label="Output P / F(R,K) (32 bit)" />
