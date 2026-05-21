@@ -316,12 +316,14 @@ function MappingTable({
   outputBits,
   label,
   columns,
+  mappingOnly = false,
 }: {
   table: number[];
   inputBits: string;
   outputBits: string;
   label: string;
   columns: 6 | 8;
+  mappingOnly?: boolean;
 }) {
   return (
     <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
@@ -337,8 +339,10 @@ function MappingTable({
           const bit = outputBits[index] ?? inputBits[sourcePosition - 1] ?? '0';
           return (
             <div key={`${label}-${index}`} className="rounded-[7px] border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-1 text-center">
-              <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{bit}</div>
-              <div className="mt-0.5 text-[8px] leading-none text-[#64748B]">{`${index + 1}<-${sourcePosition}`}</div>
+              {!mappingOnly && <div className="font-mono text-[11px] font-semibold text-[#0F172A]">{bit}</div>}
+              <div className={`${mappingOnly ? 'font-mono text-[10px] font-semibold text-[#334155]' : 'mt-0.5 text-[8px] leading-none text-[#64748B]'}`}>
+                {`${index + 1}<-${sourcePosition}`}
+              </div>
             </div>
           );
         })}
@@ -567,7 +571,10 @@ function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
           </p>
         </div>
         <BitGrid bits={bits.rightInput} label="Input R (32 bit), bit kuning disalin dua kali" changedIndexes={duplicateInputIndexes} />
-        <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} />
+        <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} mappingOnly />
+        <div className="rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] text-[#64748B]">
+          Contoh: <span className="font-mono font-semibold text-[#0F172A]">1&lt;-32</span> berarti output urutan ke-1 diambil dari input urutan ke-32.
+        </div>
       </div>
       <div className="space-y-3">
         <BitGrid bits={bits.expansion} label="Output E(R) (48 bit)" columns={6} />
