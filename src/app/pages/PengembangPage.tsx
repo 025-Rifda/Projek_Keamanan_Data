@@ -77,8 +77,6 @@ export function PengembangPage() {
           overflow: hidden;
         }
 
-        /* DIHAPUS: hero-section::before yang bikin overlay putih di atas teks */
-
         .blob {
           position: absolute;
           border-radius: 50%;
@@ -99,21 +97,21 @@ export function PengembangPage() {
           opacity: 0.22;
         }
 
-        .dot-grid {
-          position: absolute;
-          top: 24px; left: 3%;
-          width: 80px; height: 80px;
-          background-image: radial-gradient(circle, #93C5FD 1.2px, transparent 1.2px);
-          background-size: 12px 12px;
-          opacity: 0.5;
-        }
+        .dot-grid,
         .dot-grid-right {
           position: absolute;
-          top: 24px; right: 3%;
-          width: 80px; height: 80px;
-          background-image: radial-gradient(circle, #A5B4FC 1.2px, transparent 1.2px);
+          top: 24px;
+          width: 80px;
+          height: 80px;
           background-size: 12px 12px;
-          opacity: 0.4;
+        }
+        .dot-grid {
+          left: 3%;
+          background-image: radial-gradient(circle, #93C5FD 1.2px, transparent 1.2px);
+        }
+        .dot-grid-right {
+          right: 3%;
+          background-image: radial-gradient(circle, #A5B4FC 1.2px, transparent 1.2px);
         }
 
         .badge-pill {
@@ -148,7 +146,6 @@ export function PengembangPage() {
           background: linear-gradient(135deg, #2563EB, #4F46E5);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          background-clip: text;
         }
 
         .hero-desc {
@@ -191,7 +188,6 @@ export function PengembangPage() {
           align-items: center;
           justify-content: center;
           color: #2563EB;
-          flex-shrink: 0;
         }
         .stat-value {
           font-size: 16px;
@@ -223,26 +219,14 @@ export function PengembangPage() {
           display: flex;
           gap: 18px;
           position: relative;
-          box-shadow: 0 2px 12px rgba(37,99,235,0.05), 0 1px 2px rgba(0,0,0,0.04);
-          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-          overflow: hidden;
-        }
-        .dev-card::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #2563EB, #4F46E5);
-          opacity: 0;
-          transition: opacity 0.2s;
-          border-radius: 18px 18px 0 0;
+          box-shadow: 0 2px 12px rgba(37,99,235,0.05);
+          transition: transform 0.2s, box-shadow 0.2s;
         }
         .dev-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 12px 36px rgba(37,99,235,0.12), 0 2px 4px rgba(0,0,0,0.05);
+          box-shadow: 0 12px 36px rgba(37,99,235,0.12);
           border-color: #BFDBFE;
         }
-        .dev-card:hover::before { opacity: 1; }
 
         .card-dots {
           position: absolute;
@@ -256,7 +240,6 @@ export function PengembangPage() {
           width: 4px; height: 4px;
           border-radius: 50%;
           background: #94A3B8;
-          display: block;
         }
 
         .dev-photo {
@@ -266,16 +249,11 @@ export function PengembangPage() {
           background: linear-gradient(135deg, #DBEAFE, #E0E7FF);
           border: 2px solid #BFDBFE;
           box-shadow: 0 4px 12px rgba(37,99,235,0.12);
-          transition: transform 0.2s;
-          flex-shrink: 0;
-          align-self: flex-start;
         }
-        .dev-card:hover .dev-photo { transform: scale(1.04); }
         .dev-photo img { width: 100%; height: 100%; object-fit: cover; }
 
-        .dev-info { flex: 1; min-width: 0; }
-        .dev-name { font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 2px; }
-        .dev-role { font-size: 13px; font-weight: 600; color: #2563EB; margin: 0 0 8px; }
+        .dev-info { flex: 1; }
+        .dev-name { font-size: 16px; font-weight: 700; color: #0F172A; }
         .dev-badge {
           display: inline-flex;
           align-items: center;
@@ -284,10 +262,14 @@ export function PengembangPage() {
           border-radius: 999px;
           font-size: 11px;
           font-weight: 600;
-          margin-bottom: 10px;
-          border: 1px solid transparent;
+          margin: 6px 0 10px;
         }
-        .dev-desc { font-size: 12.5px; color: #64748B; line-height: 1.65; margin: 0 0 14px; }
+        .dev-desc {
+          font-size: 12.5px;
+          color: #64748B;
+          line-height: 1.65;
+          margin-bottom: 14px;
+        }
 
         .social-links { display: flex; gap: 8px; }
         .social-btn {
@@ -295,17 +277,17 @@ export function PengembangPage() {
           border-radius: 9px;
           background: #F8FAFC;
           border: 1px solid #E2E8F0;
+          display: flex; align-items: center; justify-content: center;
           color: #64748B;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-decoration: none;
-          transition: all 0.15s;
+          transition: 0.15s;
         }
         .social-btn:hover { transform: translateY(-1px); }
-        .social-btn.github:hover { background: #0F172A; border-color: #0F172A; color: #fff; }
-        .social-btn.instagram:hover { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-color: #cc2366; color: #fff; }
-        .social-btn.email:hover { background: #EA4335; border-color: #EA4335; color: #fff; }
+        .social-btn.github:hover { background: #0F172A; border-color: #0F172A; color: white; }
+        .social-btn.instagram:hover {
+          background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+          color: white;
+        }
+        .social-btn.email:hover { background: #EA4335; border-color: #EA4335; color: white; }
 
         .about-section { padding: 0 24px 52px; }
         .about-card {
@@ -317,19 +299,8 @@ export function PengembangPage() {
           padding: 28px 32px;
           display: flex;
           gap: 28px;
-          align-items: flex-start;
-          box-shadow: 0 2px 16px rgba(37,99,235,0.07);
-          position: relative;
-          overflow: hidden;
         }
-        .about-card::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(239,246,255,0.6) 0%, rgba(238,242,255,0.4) 100%);
-          pointer-events: none;
-          border-radius: 20px;
-        }
+
         .about-icon-bg {
           width: 80px; height: 80px;
           border-radius: 18px;
@@ -339,14 +310,19 @@ export function PengembangPage() {
           align-items: center;
           justify-content: center;
           color: #2563EB;
-          box-shadow: 0 4px 16px rgba(37,99,235,0.14);
-          flex-shrink: 0;
-          position: relative;
-          z-index: 1;
         }
-        .about-content { flex: 1; position: relative; z-index: 1; }
-        .about-title { font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 10px; }
-        .about-desc { font-size: 13.5px; color: #475569; line-height: 1.75; margin: 0 0 14px; }
+
+        .about-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #0F172A;
+          margin-bottom: 10px;
+        }
+        .about-desc {
+          font-size: 13.5px;
+          color: #475569;
+          line-height: 1.75;
+        }
         .about-note {
           display: inline-flex;
           align-items: center;
@@ -357,96 +333,58 @@ export function PengembangPage() {
           border-radius: 9px;
           font-size: 12.5px;
           color: #3730A3;
-          font-weight: 500;
-          margin-bottom: 10px;
+          margin: 14px 0;
         }
-        .about-sub { font-size: 13px; color: #64748B; line-height: 1.7; margin: 0; }
+
         .about-github-btn {
-          flex-shrink: 0;
-          position: relative;
-          z-index: 1;
           display: inline-flex;
           align-items: center;
           gap: 8px;
           padding: 11px 20px;
           border-radius: 10px;
-          background: linear-gradient(135deg, #2563EB, #4F46E5);
-          color: #fff;
           font-size: 13px;
           font-weight: 600;
+          background: linear-gradient(135deg, #2563EB, #4F46E5);
+          color: white;
           text-decoration: none;
-          box-shadow: 0 4px 14px rgba(37,99,235,0.28);
-          transition: transform 0.15s, box-shadow 0.15s;
-          white-space: nowrap;
-          font-family: 'Sora', sans-serif;
-        }
-        .about-github-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(37,99,235,0.36);
         }
 
         .footer-note {
           text-align: center;
-          padding: 20px 0 32px;
           font-size: 13px;
           color: #94A3B8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
+          padding: 20px 0 32px;
         }
-        .heart { color: #F43F5E; font-size: 15px; }
-
-        @media (max-width: 768px) {
-          .dev-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 640px) {
-          .about-card { flex-direction: column; }
-          .about-icon-bg { display: none; }
-          .about-github-btn { width: 100%; justify-content: center; }
-          .stat-item { min-width: 120px; }
-          .dev-card { flex-direction: column; }
-          .dev-photo { width: 72px; height: 72px; }
-        }
+        .heart { color: #F43F5E; }
       `}</style>
 
       <div className="pengembang-page">
 
-        {/* Hero */}
+        {/* Hero Section */}
         <section className="hero-section">
           <div className="blob blob-1" />
           <div className="blob blob-2" />
           <div className="blob blob-3" />
           <div className="dot-grid" />
           <div className="dot-grid-right" />
-          <svg className="hex-deco" viewBox="0 0 100 115" fill="none">
-            <path d="M50 5 L93 28 L93 87 L50 110 L7 87 L7 28 Z" stroke="#3B82F6" strokeWidth="1.5" fill="rgba(219,234,254,0.35)" />
-            <path d="M50 22 L79 38 L79 77 L50 93 L21 77 L21 38 Z" stroke="#6366F1" strokeWidth="1" fill="rgba(199,210,254,0.2)" />
-            <g transform="translate(38,42)">
-              <rect x="2" y="0" width="20" height="20" rx="3" fill="#2563EB" opacity="0.7" />
-              <path d="M12 5 L12 15 M7 10 L17 10" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </g>
-          </svg>
 
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             <div className="badge-pill">
-              <Users size={13} />
-              Tim Pengembang
+              <Users size={13} /> Tim Pengembang
             </div>
           </motion.div>
 
-          <motion.h1 className="hero-title" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          <motion.h1 className="hero-title" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             Kenalan dengan Tim <span>CryptoDES</span>
           </motion.h1>
 
-          <motion.p className="hero-desc" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+          <motion.p className="hero-desc" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             Kami adalah tim yang bersemangat dalam menghadirkan pendidikan kriptografi yang interaktif dan mudah dipahami.
           </motion.p>
 
-          <motion.div className="stats-bar" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+          <motion.div className="stats-bar" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             {stats.map((s, i) => (
-              <div className="stat-item" key={i}>
+              <div key={i} className="stat-item">
                 <div className="stat-icon">{s.icon}</div>
                 <div>
                   <div className="stat-value">{s.value}</div>
@@ -463,12 +401,11 @@ export function PengembangPage() {
             <motion.div
               key={index}
               className="dev-card"
-              initial={{ opacity: 0, y: 28 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.1 + index * 0.09 }}
             >
               <div className="card-dots">
-                {Array.from({ length: 9 }).map((_, i) => <span key={i} />)}
+                {[...Array(9)].map((_, i) => <span key={i} />)}
               </div>
 
               <div className="dev-photo">
@@ -477,55 +414,64 @@ export function PengembangPage() {
 
               <div className="dev-info">
                 <div className="dev-name">{dev.name}</div>
-                <div className="dev-badge" style={{ color: dev.badgeColor, background: dev.badgeBg, borderColor: dev.badgeColor + '33' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: dev.badgeColor, display: 'inline-block', flexShrink: 0 }} />
+
+                <div
+                  className="dev-badge"
+                  style={{
+                    color: dev.badgeColor,
+                    background: dev.badgeBg,
+                    borderColor: dev.badgeColor + '33'
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: dev.badgeColor }} />
                   {dev.badge}
                 </div>
+
                 <p className="dev-desc">{dev.description}</p>
+
                 <div className="social-links">
-                  <a href={dev.github} target="_blank" rel="noopener noreferrer" className="social-btn github" title="GitHub"><Github size={15} /></a>
-                  <a href={dev.instagram} target="_blank" rel="noopener noreferrer" className="social-btn instagram" title="Instagram"><Instagram size={15} /></a>
-                  <a href={`mailto:${dev.email}`} className="social-btn email" title="Email"><Mail size={15} /></a>
+                  <a href={dev.github} className="social-btn github"><Github size={15} /></a>
+                  <a href={dev.instagram} className="social-btn instagram"><Instagram size={15} /></a>
+                  <a href={`mailto:${dev.email}`} className="social-btn email"><Mail size={15} /></a>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* About Project */}
+        {/* About Section */}
         <section className="about-section">
-          <motion.div className="about-card" initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.55 }}>
+          <div className="about-card">
             <div className="about-icon-bg">
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect x="6" y="6" width="24" height="24" rx="5" fill="#2563EB" opacity="0.15" />
-                <rect x="10" y="10" width="16" height="16" rx="3" fill="#2563EB" opacity="0.25" />
-                <path d="M18 13 L18 23 M13 18 L23 18" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" />
+                <rect x="6" y="6" width="24" height="24" rx="5" fill="#2563EB" opacity="0.2" />
+                <rect x="10" y="10" width="16" height="16" rx="3" fill="#2563EB" opacity="0.35" />
+                <path d="M18 13L18 23M13 18L23 18" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" />
               </svg>
             </div>
-            <div className="about-content">
+
+            <div>
               <div className="about-title">Tentang Proyek</div>
               <p className="about-desc">
-                CryptoDES adalah platform edukasi kriptografi yang dikembangkan untuk membantu siswa dan
-                mahasiswa memahami algoritma enkripsi DES melalui visualisasi interaktif dan penjelasan yang mudah dipahami.
+                CryptoDES adalah platform edukasi kriptografi untuk memahami algoritma enkripsi DES melalui
+                visualisasi interaktif serta penjelasan yang mudah dipahami.
               </p>
+
               <div className="about-note">
                 <Github size={14} />
                 Proyek ini open source dan tersedia di GitHub.
               </div>
-              <p className="about-sub">Kami sangat terbuka untuk kontribusi dan saran dari komunitas.</p>
+
+              <a href="https://github.com/cryptodes/cryptodes" className="about-github-btn">
+                <Github size={15} /> Lihat di GitHub <ExternalLink size={12} />
+              </a>
             </div>
-            <a href="https://github.com/cryptodes/cryptodes" target="_blank" rel="noopener noreferrer" className="about-github-btn">
-              <Github size={15} />
-              Lihat di GitHub
-              <ExternalLink size={12} style={{ opacity: 0.7 }} />
-            </a>
-          </motion.div>
+          </div>
         </section>
 
         {/* Footer */}
         <div className="footer-note">
-          <span className="heart">♥</span>
-          Dibuat dengan semangat untuk pendidikan dan kemajuan bersama.
+          <span className="heart">♥</span> Dibuat dengan semangat untuk pendidikan.
         </div>
 
       </div>
