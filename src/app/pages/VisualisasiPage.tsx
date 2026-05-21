@@ -1305,13 +1305,13 @@ function Step3StoryVisual({
                 {pc2Table.map((position, index) => (
                   <div
                     key={`story-pc2-${position}-${index}`}
-                    className="flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border border-[#E2E8F0] bg-white px-1 py-1.5 text-center font-mono"
+                    className="relative rounded-[7px] border border-[#BFDBFE] bg-white px-1 py-2 text-center font-mono text-[11px] font-semibold text-[#1D4ED8]"
                     title={`Output bit ke-${index + 1} mengambil input bit ke-${position}`}
                   >
-                    <span className="text-[8px] font-medium leading-none text-[#94A3B8]">
+                    {position}
+                    <span className="absolute -right-1 -top-1 rounded-full bg-[#2563EB] px-1 text-[8px] leading-[13px] text-white ring-2 ring-[#F8FAFC]">
                       #{index + 1}
                     </span>
-                    <span className="mt-1 text-[11px] font-semibold leading-none text-[#334155]">{position}</span>
                   </div>
                 ))}
               </div>
@@ -1356,6 +1356,20 @@ function Step3StoryVisual({
                     {bits}
                   </span>
                 ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+            <div className="mb-2 text-[12px] font-semibold text-[#1D4ED8]">Cara membaca mapping</div>
+            <div className="space-y-2 text-[12px] text-[#1D4ED8]">
+              <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">
+                Output bit ke-1 K{currentRound} berasal dari input bit ke-{pc2Table[0]}.
+              </div>
+              <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">
+                Output bit ke-2 berasal dari input bit ke-{pc2Table[1]}.
+              </div>
+              <div className="rounded-[10px] bg-white px-3 py-2 ring-1 ring-[#BFDBFE]">
+                Nomor # pada grid menunjukkan posisi bit itu di output K{currentRound}.
               </div>
             </div>
           </div>
