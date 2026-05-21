@@ -18,6 +18,7 @@ export interface FeistelRoundData {
 
 interface FeistelRoundsVisualizationProps {
   data: FeistelRoundData[];
+  tutorialMode?: boolean;
 }
 
 type RoundStepId = 'input' | 'expansion' | 'xor-key' | 'sbox' | 'permutation' | 'output';
@@ -255,6 +256,43 @@ function BitGrid({
   );
 }
 
+function FeistelDiagram({ round }: { round: FeistelRoundData }) {
+  const labels = getLabels(round);
+
+  return (
+    <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+      <div className="mb-3 text-[12px] font-semibold text-[#1D4ED8]">Diagram Feistel ronde {round.round}</div>
+      <svg viewBox="0 0 520 260" className="h-auto w-full" role="img" aria-label="Diagram alur Feistel">
+        <defs>
+          <marker id={`arrow-${round.round}`} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#2563EB" />
+          </marker>
+        </defs>
+        <rect x="35" y="28" width="110" height="44" rx="10" fill="#FFFFFF" stroke="#BFDBFE" />
+        <text x="90" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1D4ED8">{labels.leftIn}</text>
+        <rect x="375" y="28" width="110" height="44" rx="10" fill="#FFFFFF" stroke="#BBF7D0" />
+        <text x="430" y="55" textAnchor="middle" fontSize="14" fontWeight="700" fill="#15803D">{labels.rightIn}</text>
+        <rect x="344" y="106" width="172" height="50" rx="12" fill="#FFFFFF" stroke="#FDE68A" />
+        <text x="430" y="136" textAnchor="middle" fontSize="13" fontWeight="700" fill="#92400E">Function F({labels.rightIn}, {labels.subkey})</text>
+        <circle cx="230" cy="131" r="18" fill="#FFFFFF" stroke="#F59E0B" strokeWidth="2" />
+        <text x="230" y="137" textAnchor="middle" fontSize="16" fontWeight="700" fill="#92400E">XOR</text>
+        <rect x="35" y="190" width="110" height="44" rx="10" fill="#FFFFFF" stroke="#BBF7D0" />
+        <text x="90" y="217" textAnchor="middle" fontSize="14" fontWeight="700" fill="#15803D">{labels.leftOut} = {labels.rightIn}</text>
+        <rect x="375" y="190" width="110" height="44" rx="10" fill="#FFFFFF" stroke="#FECDD3" />
+        <text x="430" y="217" textAnchor="middle" fontSize="14" fontWeight="700" fill="#BE123C">{labels.rightOut}</text>
+        <path d="M430 72 V106" stroke="#2563EB" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
+        <path d="M344 131 H248" stroke="#2563EB" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
+        <path d="M145 50 C210 50 190 131 212 131" stroke="#2563EB" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
+        <path d="M248 131 C305 131 315 212 375 212" stroke="#2563EB" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
+        <path d="M430 72 C430 118 90 130 90 190" stroke="#16A34A" strokeWidth="3" fill="none" markerEnd={`url(#arrow-${round.round})`} />
+      </svg>
+      <p className="mt-2 text-[12px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
+        {labels.leftOut} langsung mengambil nilai {labels.rightIn}. Sementara itu, {labels.rightIn} masuk ke Function F, hasilnya di-XOR dengan {labels.leftIn}, lalu menjadi {labels.rightOut}.
+      </p>
+    </div>
+  );
+}
+
 function MappingTable({
   table,
   inputBits,
@@ -462,6 +500,7 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
   return (
     <>
       <div className="space-y-3">
+        <FeistelDiagram round={round} />
         <BitGrid bits={bits.leftInput} label={`${labels.leftIn} - sisi kiri (32 bit)`} />
         <BitGrid bits={bits.rightInput} label={`${labels.rightIn} - sisi kanan (32 bit)`} />
       </div>
@@ -474,10 +513,19 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
 }
 
 function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
+  const duplicateInputIndexes = DES_EXPANSION_TABLE
+    .filter((position, _, table) => table.indexOf(position) !== table.lastIndexOf(position))
+    .map((position) => position - 1);
+
   return (
     <>
       <div className="space-y-3">
-        <BitGrid bits={bits.rightInput} label="Input R (32 bit)" />
+        <div className="rounded-[14px] border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3">
+          <p className="text-[12px] text-[#15803D]" style={{ lineHeight: 1.65 }}>
+            Subkey K berukuran 48 bit. Agar bisa di-XOR, R juga harus 48 bit. Expansion menyalin beberapa bit tepi sehingga bit-bit tersebut memengaruhi dua S-Box sekaligus dan memperkuat difusi.
+          </p>
+        </div>
+        <BitGrid bits={bits.rightInput} label="Input R (32 bit), bit kuning disalin dua kali" changedIndexes={duplicateInputIndexes} />
         <MappingTable table={DES_EXPANSION_TABLE} inputBits={bits.rightInput} outputBits={bits.expansion} label="Tabel Expansion E" columns={6} />
       </div>
       <div className="space-y-3">
@@ -494,10 +542,21 @@ function XorStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<ty
   return (
     <>
       <div className="space-y-3">
+        <div className="rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
+          <div className="mb-2 text-[12px] font-semibold text-[#78350F]">XOR dari nol</div>
+          <p className="text-[12px] text-[#92400E]" style={{ lineHeight: 1.65 }}>
+            XOR itu sederhana: 0 xor 0 = 0, 0 xor 1 = 1, 1 xor 0 = 1, 1 xor 1 = 0. Jika bit E(R) dan K sama, hasilnya 0; jika berbeda, hasilnya 1.
+          </p>
+          <div className="mt-3 grid grid-cols-4 gap-1 text-center font-mono text-[11px] font-semibold text-[#92400E]">
+            {['0 xor 0 = 0', '0 xor 1 = 1', '1 xor 0 = 1', '1 xor 1 = 0'].map((item) => (
+              <div key={item} className="rounded-[8px] bg-white px-2 py-2 ring-1 ring-[#FDE68A]">{item}</div>
+            ))}
+          </div>
+        </div>
         <BitGrid bits={bits.expansion} label="E(R) (48 bit)" columns={6} changedIndexes={changedIndexes} />
         <BitGrid bits={bits.subkey} label={`Subkey K${round.round} (48 bit)`} columns={6} changedIndexes={changedIndexes} />
         <div className="rounded-[14px] border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-[12px] text-[#92400E]">
-          Bit kuning adalah posisi saat E(R) dan K berbeda, sehingga hasil XOR berubah menjadi 1.
+          Subkey K "mewarnai" E(R) sehingga hasilnya bergantung pada kunci. Bit kuning adalah posisi saat E(R) dan K berbeda, sehingga hasil XOR berubah menjadi 1.
         </div>
       </div>
       <div className="space-y-3">
@@ -520,11 +579,21 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
   return (
     <>
       <div className="space-y-3">
+        <div className="rounded-[14px] border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3">
+          <div className="mb-2 text-[12px] font-semibold text-[#5B21B6]">Cara membaca S-Box</div>
+          <p className="text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
+            S-Box adalah jantung non-linearitas DES. Input 6 bit menjadi output 4 bit: bit pertama dan terakhir memilih baris (0-3), empat bit tengah memilih kolom (0-15), lalu hasil diambil dari perpotongan baris dan kolom.
+          </p>
+          <p className="mt-2 text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
+            S-Box sengaja dibuat non-linear, tidak ada rumus sederhana untuk menebak outputnya. Inilah yang membuat DES lebih sulit dipecah secara analitik.
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           {chunks.map((chunk, index) => {
             const active = index === activeBox;
             const row = parseInt(`${chunk[0]}${chunk[5]}`, 2);
             const column = parseInt(chunk.slice(1, 5), 2);
+            const chars = chunk.split('');
 
             return (
               <button
@@ -536,7 +605,22 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
                 }`}
               >
                 <div className="text-[11px] font-semibold text-[#5B21B6]">S{index + 1}</div>
-                <div className="mt-1 font-mono text-[13px] font-semibold text-[#0F172A]">{chunk}</div>
+                <div className="mt-1 flex gap-1 font-mono text-[13px] font-semibold">
+                  {chars.map((bit, bitIndex) => (
+                    <motion.span
+                      key={`${chunk}-${bitIndex}`}
+                      animate={active && (bitIndex === 0 || bitIndex === 5) ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+                      transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
+                      className={`rounded-[5px] px-1.5 py-1 ${
+                        bitIndex === 0 || bitIndex === 5
+                          ? 'bg-[#FEF3C7] text-[#92400E]'
+                          : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
+                      }`}
+                    >
+                      {bit}
+                    </motion.span>
+                  ))}
+                </div>
                 <div className="mt-1 text-[10px] text-[#64748B]">baris {row}, kolom {column}</div>
                 <div className="mt-2 rounded-[8px] bg-white px-2 py-1 font-mono text-[11px] text-[#6D28D9] ring-1 ring-[#DDD6FE]">
                   out {outputs[index]}
@@ -559,6 +643,11 @@ function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
   return (
     <>
       <div className="space-y-3">
+        <div className="rounded-[14px] border border-[#A5F3FC] bg-[#ECFEFF] px-4 py-3">
+          <p className="text-[12px] text-[#0E7490]" style={{ lineHeight: 1.65 }}>
+            Setelah S-Box, bit-bit yang berubah masih berkelompok. Permutasi P menyebarkannya ke posisi berbeda sehingga di ronde berikutnya, setiap S-Box mendapat input dari S-Box yang berbeda. Ini disebut difusi lintas blok.
+          </p>
+        </div>
         <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" />
         <MappingTable table={DES_PERMUTATION_P_TABLE} inputBits={bits.sboxOutput} outputBits={bits.permutationOutput} label="Tabel Permutasi P" columns={8} />
       </div>
@@ -585,6 +674,20 @@ function OutputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType
         <div className="grid gap-3 md:grid-cols-2">
           <BitGrid bits={bits.leftOutput} label={`${labels.leftOut} = ${labels.rightIn}`} />
           <BitGrid bits={bits.rightOutput} label={`${labels.rightOut} = ${labels.leftIn} XOR F`} changedIndexes={changedIndexes} />
+        </div>
+        <div className="rounded-[14px] border border-[#FECDD3] bg-white p-4">
+          <div className="mb-3 text-[12px] font-semibold text-[#BE123C]">Formula ronde Feistel</div>
+          <div className="grid gap-2 md:grid-cols-2">
+            <div className="rounded-[10px] bg-[#EFF6FF] px-3 py-2 font-mono text-[13px] font-semibold text-[#1D4ED8]">
+              L{round.round} = R{round.round - 1}
+            </div>
+            <div className="rounded-[10px] bg-[#FFF1F2] px-3 py-2 font-mono text-[13px] font-semibold text-[#BE123C]">
+              R{round.round} = L{round.round - 1} xor F(R{round.round - 1}, K{round.round})
+            </div>
+          </div>
+          <p className="mt-3 text-[12px] text-[#64748B]" style={{ lineHeight: 1.65 }}>
+            Struktur Feistel ini brilian karena dekripsi DES cukup menjalankan ronde yang sama dengan urutan subkey dibalik. Function F tidak perlu bisa dibalik.
+          </p>
         </div>
         <div className="rounded-[14px] border border-[#FECDD3] bg-[#FFF1F2] p-4">
           <div className="mb-3 flex items-center gap-2 text-[12px] font-semibold text-[#BE123C]">
@@ -666,7 +769,7 @@ function StepContent({
   );
 }
 
-export function FeistelRoundsVisualization({ data }: FeistelRoundsVisualizationProps) {
+export function FeistelRoundsVisualization({ data, tutorialMode = false }: FeistelRoundsVisualizationProps) {
   const [currentRound, setCurrentRound] = useState(1);
   const [activeStep, setActiveStep] = useState(0);
 
@@ -733,6 +836,11 @@ export function FeistelRoundsVisualization({ data }: FeistelRoundsVisualizationP
         </div>
       </div>
       <StepTabs activeIndex={activeStep} onSelect={setActiveStep} />
+      {tutorialMode && (
+        <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[12px] text-[#1D4ED8]">
+          Ikuti tab dari kiri ke kanan. Setiap tab menunjukkan satu bagian Function F atau swap pada ronde Feistel yang sedang dipilih.
+        </div>
+      )}
       <StepContent round={currentData} activeStep={activeStep} bits={bits} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
