@@ -21,7 +21,7 @@ const developers = [
     email: 'siti.nur@cryptodes.com',
   },
   {
-    name: 'Budi Santoso',
+    name: 'elysa',
     role: 'Cryptography Expert',
     description: 'Ahli kriptografi dengan pengalaman dalam analisis struktur Feistel, key schedule DES, dan evaluasi keamanan algoritma klasik.',
     photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi',
