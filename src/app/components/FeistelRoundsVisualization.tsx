@@ -248,11 +248,11 @@ function BitGrid({
 
   return (
     <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${isRoomy ? 'p-4' : 'p-3'}`}>
-      <div className={`${isRoomy ? 'mb-3' : 'mb-2'} flex items-center justify-between gap-2`}>
+      <div className={`${isRoomy ? 'mb-3' : 'mb-2'} flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2`}>
         <div className={`${cellSize === 'xl' ? 'text-[12px]' : 'text-[11px]'} font-semibold uppercase tracking-[0.08em] text-[#64748B]`}>{label}</div>
-        <div className={`${cellSize === 'xl' ? 'text-[12px]' : 'text-[11px]'} font-mono font-semibold text-[#0F172A]`}>{binaryToHex(bits)}</div>
+        <div className={`${cellSize === 'xl' ? 'text-[12px]' : 'text-[11px]'} break-all font-mono font-semibold text-[#0F172A]`}>{binaryToHex(bits)}</div>
       </div>
-      <div className={`grid ${cellSize === 'xl' ? 'gap-2' : isRoomy ? 'gap-1.5' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+      <div className={`grid min-w-0 ${cellSize === 'xl' ? 'gap-2' : isRoomy ? 'gap-1.5' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
         {bits.split('').map((bit, index) => (
           <BitCell
             key={`${label}-${index}`}
@@ -349,15 +349,15 @@ function MappingTable({
   large?: boolean;
 }) {
   return (
-    <div className={`rounded-[14px] border border-[#E2E8F0] bg-white ${large ? 'p-4' : 'p-3'}`}>
-      <div className={`${large ? 'mb-4' : 'mb-3'} flex items-center justify-between gap-2`}>
+    <div className={`min-w-0 rounded-[14px] border border-[#E2E8F0] bg-white ${large ? 'p-4' : 'p-3'}`}>
+      <div className={`${large ? 'mb-4' : 'mb-3'} flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2`}>
         <div className={`inline-flex items-center gap-2 ${large ? 'text-[14px]' : 'text-[12px]'} font-semibold text-[#0F172A]`}>
           <Table2 className={`${large ? 'h-5 w-5' : 'h-4 w-4'} text-[#2563EB]`} />
           {label}
         </div>
         <div className={`${large ? 'text-[12px]' : 'text-[11px]'} text-[#64748B]`}>Output mengambil posisi input</div>
       </div>
-      <div className={`grid ${large ? 'gap-2' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
+      <div className={`grid min-w-0 ${large ? 'gap-2' : 'gap-1'} ${columns === 6 ? 'grid-cols-6' : 'grid-cols-8'}`}>
         {table.map((sourcePosition, index) => {
           const bit = outputBits[index] ?? inputBits[sourcePosition - 1] ?? '0';
           const active = activeIndex === index;
@@ -530,33 +530,35 @@ function SBoxTable({
           {`${value} -> ${outputBits}`}
         </div>
       </div>
-      <div className="grid grid-cols-[34px_repeat(16,minmax(28px,1fr))] gap-1 overflow-x-auto text-center text-[10px]">
-        <div className="rounded-[5px] bg-[#F8FAFC] py-1 text-[#94A3B8]">r/c</div>
-        {Array.from({ length: 16 }, (_, col) => (
-          <div key={`col-${col}`} className={`rounded-[5px] py-1 font-semibold ${col === column ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
-            {col}
-          </div>
-        ))}
-        {DES_S_BOXES[boxIndex].map((rowValues, rowIndex) => (
-          <Fragment key={`sbox-row-${rowIndex}`}>
-            <div key={`row-label-${rowIndex}`} className={`rounded-[5px] py-1 font-semibold ${rowIndex === row ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
-              {rowIndex}
+      <div className="overflow-x-auto pb-1">
+        <div className="grid min-w-[520px] grid-cols-[34px_repeat(16,minmax(28px,1fr))] gap-1 text-center text-[10px]">
+          <div className="rounded-[5px] bg-[#F8FAFC] py-1 text-[#94A3B8]">r/c</div>
+          {Array.from({ length: 16 }, (_, col) => (
+            <div key={`col-${col}`} className={`rounded-[5px] py-1 font-semibold ${col === column ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
+              {col}
             </div>
-            {rowValues.map((cell, colIndex) => {
-              const selected = rowIndex === row && colIndex === column;
-              return (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={`rounded-[5px] py-1 font-mono font-semibold ${
-                    selected ? 'bg-[#7C3AED] text-white shadow-[0_4px_12px_rgba(124,58,237,0.25)]' : 'bg-white text-[#475569] ring-1 ring-[#E2E8F0]'
-                  }`}
-                >
-                  {cell}
-                </div>
-              );
-            })}
-          </Fragment>
-        ))}
+          ))}
+          {DES_S_BOXES[boxIndex].map((rowValues, rowIndex) => (
+            <Fragment key={`sbox-row-${rowIndex}`}>
+              <div key={`row-label-${rowIndex}`} className={`rounded-[5px] py-1 font-semibold ${rowIndex === row ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
+                {rowIndex}
+              </div>
+              {rowValues.map((cell, colIndex) => {
+                const selected = rowIndex === row && colIndex === column;
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className={`rounded-[5px] py-1 font-mono font-semibold ${
+                      selected ? 'bg-[#7C3AED] text-white shadow-[0_4px_12px_rgba(124,58,237,0.25)]' : 'bg-white text-[#475569] ring-1 ring-[#E2E8F0]'
+                    }`}
+                  >
+                    {cell}
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1185,7 +1187,7 @@ function StepContent({
           <div className={`w-fit rounded-[10px] border px-3 py-2 text-[12px] font-semibold ${toneClass[step.tone].active}`}>{step.size}</div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[0.96fr_1.04fr]">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]">
           {step.id === 'input' && <InputStep round={round} bits={bits} />}
           {step.id === 'expansion' && <ExpansionStep bits={bits} />}
           {step.id === 'xor-key' && <XorStep round={round} bits={bits} />}
@@ -1258,7 +1260,7 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-4 shadow-sm">
+      <div className="min-w-0 rounded-[18px] border border-[#E2E8F0] bg-white p-3 shadow-sm sm:p-4">
         <RoundSelector totalRounds={totalRounds} currentRound={currentData.round} onSelectRound={selectRound} />
         <div className="mt-4">
           <MetaBar round={currentData} totalRounds={totalRounds} />
@@ -1281,7 +1283,7 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
           <ChevronLeft className="h-4 w-4" />
           Tahap Sebelumnya
         </button>
-        <div className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] text-[#64748B]">
+        <div className="inline-flex min-w-0 items-center justify-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-center text-[12px] text-[#64748B]">
           <KeyRound className="h-4 w-4 text-[#F59E0B]" />
           {roundSteps[activeStep].tab} pada Ronde {currentData.round}
         </div>
