@@ -1,5 +1,12 @@
-import { Github, Instagram, Mail, Users, Code2, Shield, BookOpen, ExternalLink } from 'lucide-react';
+import { Github, Instagram, Mail, Users, Code2, Shield, BookOpen, ExternalLink, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
+import kakPhoto from '../../assets/developers/kak.jpeg';
+import elPhoto from '../../assets/developers/el.jpeg';
+import desPhoto from '../../assets/developers/des.jpeg';
+import raPhoto from '../../assets/developers/ra.jpeg';
+
+const createGmailComposeLink = (email: string) =>
+  `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
 
 const developers = [
   {
@@ -8,10 +15,10 @@ const developers = [
     badgeColor: '#2563EB',
     badgeBg: '#EFF6FF',
     description: 'Memimpin, mengarahkan, dan mengkoordinasikan seluruh kegiatan tim.',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad',
+    photo: kakPhoto,
     github: 'https://github.com/025-Rifda',
     instagram: 'https://www.instagram.com/rizenka.airin0701',
-    email: 'ahmad.rizki@cryptodes.com',
+    email: '25051204256@unesa.ac.id',
   },
   {
     name: 'Elysa Hayu Noorhaini',
@@ -19,10 +26,10 @@ const developers = [
     badgeColor: '#7C3AED',
     badgeBg: '#F5F3FF',
     description: 'Membantu ketua dalam pelaksanaan tugas dan mendukung kelancaran kerja tim.',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Siti',
+    photo: elPhoto,
     github: 'https://github.com/Elysa-21',
     instagram: 'https://www.instagram.com/elysaaa21_',
-    email: 'siti.nur@cryptodes.com',
+    email: '25051204363@unesa.ac.id',
   },
   {
     name: 'Desta Berlianda Faathir',
@@ -30,21 +37,21 @@ const developers = [
     badgeColor: '#0891B2',
     badgeBg: '#ECFEFF',
     description: 'Memberikan dukungan teknis/kreatif dan membantu tugas operasional tim.',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi',
+    photo: desPhoto,
     github: 'https://github.com/DestaBerlianda',
     instagram: 'https://www.instagram.com/taa_malaka?igsh=MWN6eW1tZWl5cmt4Ng==',
-    email: 'DestaBerlianda1205@gmail.com',
+    email: '25051204350@unesa.ac.id',
   },
   {
-    name: 'Dea Suci Ramadhani',
+    name: 'Dea Suci Ramadani',
     badge: 'Anggota 3',
     badgeColor: '#059669',
     badgeBg: '#ECFDF5',
     description: 'Mengelola data, dokumentasi, serta membantu penyusunan laporan.',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Diana',
-    github: 'https://github.com/dianaputri',
-    instagram: 'https://instagram.com/dianaputri',
-    email: 'diana.putri@cryptodes.com',
+    photo: raPhoto,
+    github: 'https://github.com/128-Dea',
+    instagram: 'https://www.instagram.com/dhesurha_?igsh=bmM2aXEzYXlrcXJy',
+    email: '25051204296@gmail.com',
   },
 ];
 
@@ -556,13 +563,18 @@ export function PengembangPage() {
                 <p className="dev-desc">{dev.description}</p>
 
                 <div className="social-links">
-                  <a href={dev.github} className="social-btn github">
+                  <a href={dev.github} className="social-btn github" target="_blank" rel="noreferrer">
                     <Github size={15} />
                   </a>
-                  <a href={dev.instagram} className="social-btn instagram">
+                  <a href={dev.instagram} className="social-btn instagram" target="_blank" rel="noreferrer">
                     <Instagram size={15} />
                   </a>
-                  <a href={`mailto:${dev.email}`} className="social-btn email">
+                  <a
+                    href={createGmailComposeLink(dev.email)}
+                    className="social-btn email"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Mail size={15} />
                   </a>
                 </div>
@@ -574,11 +586,20 @@ export function PengembangPage() {
         <section className="about-section">
           <div className="about-card">
             <div className="about-icon-bg">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect x="6" y="6" width="24" height="24" rx="5" fill="#2563EB" opacity="0.2" />
-                <rect x="10" y="10" width="16" height="16" rx="3" fill="#2563EB" opacity="0.35" />
-                <path d="M18 13V23M13 18h10" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 14,
+                  background: 'linear-gradient(135deg, #1E3A8A, #3B82F6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 10px 24px rgba(37,99,235,0.24)',
+                }}
+              >
+                <Lock size={22} color="#FFFFFF" />
+              </div>
             </div>
 
             <div>
@@ -594,7 +615,12 @@ export function PengembangPage() {
                 Proyek ini open source dan tersedia di GitHub.
               </div>
 
-              <a href="https://github.com/cryptodes/cryptodes" className="about-github-btn">
+              <a
+                href="https://github.com/025-Rifda/CryptoDES"
+                className="about-github-btn"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Github size={15} /> Lihat di GitHub <ExternalLink size={12} />
               </a>
             </div>
