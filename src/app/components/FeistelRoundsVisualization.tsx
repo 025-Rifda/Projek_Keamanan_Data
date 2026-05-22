@@ -518,7 +518,7 @@ function SBoxTable({
   const value = DES_S_BOXES[boxIndex][row][column];
 
   return (
-    <div className="rounded-[14px] border border-[#DDD6FE] bg-white p-3">
+    <div className="min-w-0 rounded-[14px] border border-[#DDD6FE] bg-white p-3">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-[13px] font-semibold text-[#5B21B6]">S{boxIndex + 1} lookup</div>
@@ -530,8 +530,8 @@ function SBoxTable({
           {`${value} -> ${outputBits}`}
         </div>
       </div>
-      <div className="overflow-x-auto pb-1">
-        <div className="grid min-w-[520px] grid-cols-[34px_repeat(16,minmax(28px,1fr))] gap-1 text-center text-[10px]">
+      <div className="overflow-x-auto overscroll-x-contain pb-1">
+        <div className="grid min-w-[480px] grid-cols-[30px_repeat(16,minmax(26px,1fr))] gap-1 text-center text-[10px] sm:min-w-[520px] sm:grid-cols-[34px_repeat(16,minmax(28px,1fr))]">
           <div className="rounded-[5px] bg-[#F8FAFC] py-1 text-[#94A3B8]">r/c</div>
           {Array.from({ length: 16 }, (_, col) => (
             <div key={`col-${col}`} className={`rounded-[5px] py-1 font-semibold ${col === column ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
@@ -793,22 +793,22 @@ function SBoxOutputGrid({ outputs }: { outputs: string[] }) {
   const outputHex = binaryToHex(outputBits);
 
   return (
-    <div className="rounded-[16px] border border-[#DDD6FE] bg-white p-4">
+    <div className="min-w-0 rounded-[16px] border border-[#DDD6FE] bg-white p-3 sm:p-4">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#5B21B6]">Output gabungan S-Box (32 bit)</div>
           <div className="mt-1 text-[12px] text-[#6D28D9]">Delapan output 4-bit dari S1 sampai S8 digabung berurutan menjadi 32 bit.</div>
         </div>
-        <div className="w-fit rounded-[9px] border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-2 font-mono text-[12px] font-semibold text-[#5B21B6]">
+        <div className="w-fit max-w-full break-all rounded-[9px] border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-2 font-mono text-[12px] font-semibold text-[#5B21B6]">
           HEX {outputHex}
         </div>
       </div>
-      <div className="grid grid-cols-8 gap-1.5">
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8 lg:grid-cols-16">
         {outputBits.split('').map((bit, index) => (
           <div
             key={`sbox-output-bit-${index}`}
             title={`Bit ${index + 1}`}
-            className="flex h-9 items-center justify-center rounded-[7px] border border-[#C4B5FD] bg-[#EDE9FE] font-mono text-[14px] font-semibold text-[#5B21B6]"
+            className="flex h-8 min-w-0 items-center justify-center rounded-[7px] border border-[#C4B5FD] bg-[#EDE9FE] font-mono text-[13px] font-semibold text-[#5B21B6] sm:h-9 sm:text-[14px]"
           >
             {bit}
           </div>
@@ -840,7 +840,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {sboxIndexes.map((index) => {
           const chunk = chunks[index] ?? '000000';
           const output = outputs[index] ?? '0000';
@@ -854,12 +854,12 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
               key={`sbox-card-${index}`}
               type="button"
               onClick={() => setActiveBox(index)}
-              className={`flex min-h-[164px] flex-col gap-3 rounded-[12px] border p-4 text-left transition-colors ${
+              className={`flex min-h-[148px] min-w-0 flex-col gap-3 rounded-[12px] border p-3 text-left transition-colors sm:min-h-[164px] sm:p-4 ${
                 active ? 'border-[#7C3AED] bg-[#F5F3FF] shadow-[0_0_0_3px_rgba(221,214,254,0.9)]' : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]'
               }`}
             >
               <div className="text-[13px] font-semibold text-[#5B21B6]">S{index + 1}</div>
-              <div className="grid grid-cols-6 gap-1 font-mono text-[13px] font-semibold">
+              <div className="grid grid-cols-6 gap-1 font-mono text-[12px] font-semibold sm:text-[13px]">
                 {chars.map((bit, bitIndex) => {
                   const isRowBit = bitIndex === 0 || bitIndex === 5;
 
@@ -868,7 +868,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
                       <motion.span
                         animate={active && isRowBit ? { scale: [1, 1.18, 1] } : { scale: 1 }}
                         transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
-                        className={`flex h-8 w-full items-center justify-center rounded-[6px] ${
+                        className={`flex h-7 w-full min-w-0 items-center justify-center rounded-[6px] sm:h-8 ${
                           isRowBit
                             ? 'bg-[#FEF3C7] text-[#92400E]'
                             : 'bg-[#EDE9FE] text-[#5B21B6] ring-1 ring-[#DDD6FE]'
@@ -900,7 +900,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
       </div>
 
       <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
           {sboxIndexes.map((index) => {
             const active = index === activeBox;
 
@@ -909,7 +909,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
                 key={`sbox-table-tab-${index}`}
                 type="button"
                 onClick={() => setActiveBox(index)}
-                className={`rounded-[9px] border px-3 py-2 text-[12px] font-semibold transition-colors ${
+                className={`rounded-[9px] border px-2 py-2 text-[12px] font-semibold transition-colors sm:px-3 ${
                   active
                     ? 'border-[#7C3AED] bg-[#7C3AED] text-white shadow-sm'
                     : 'border-[#DDD6FE] bg-white text-[#6D28D9] hover:bg-[#F5F3FF]'

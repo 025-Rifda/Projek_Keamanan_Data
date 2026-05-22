@@ -68,11 +68,16 @@ export function PengembangPage() {
             radial-gradient(ellipse at 15% 0%, rgba(37,99,235,0.08) 0%, transparent 55%),
             radial-gradient(ellipse at 85% 5%, rgba(99,102,241,0.06) 0%, transparent 50%);
           min-height: calc(100vh - 56px);
+          overflow-x: hidden;
+        }
+
+        .pengembang-page * {
+          box-sizing: border-box;
         }
 
         .hero-section {
           position: relative;
-          padding: 52px 24px 40px;
+          padding: clamp(32px, 7vw, 52px) clamp(16px, 4vw, 24px) clamp(28px, 6vw, 40px);
           text-align: center;
           overflow: hidden;
         }
@@ -137,7 +142,7 @@ export function PengembangPage() {
         }
 
         .hero-desc {
-          font-size: 14px;
+          font-size: clamp(13px, 2.5vw, 14px);
           color: #475569;
           max-width: 560px;
           margin: 0 auto 36px;
@@ -146,9 +151,8 @@ export function PengembangPage() {
         }
 
         .stats-bar {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 10px;
           max-width: 780px;
           margin: 0 auto;
@@ -163,8 +167,7 @@ export function PengembangPage() {
           background: white;
           border: 1px solid #E2E8F0;
           border-radius: 12px;
-          min-width: 140px;
-          flex: 1;
+          min-width: 0;
         }
 
         .stat-icon {
@@ -193,11 +196,11 @@ export function PengembangPage() {
 
         .dev-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 18px;
           max-width: 1120px;
           margin: 0 auto;
-          padding: 40px 24px;
+          padding: clamp(28px, 6vw, 40px) clamp(16px, 4vw, 24px);
         }
 
         .dev-card {
@@ -208,6 +211,7 @@ export function PengembangPage() {
           display: flex;
           gap: 18px;
           position: relative;
+          min-width: 0;
           box-shadow: 0 2px 12px rgba(37, 99, 235, 0.05);
           transition: 0.2s;
         }
@@ -236,13 +240,14 @@ export function PengembangPage() {
         }
 
         .dev-photo {
-          width: 100px;
-          height: 100px;
+          width: clamp(76px, 18vw, 100px);
+          height: clamp(76px, 18vw, 100px);
           border-radius: 16px;
           overflow: hidden;
           background: linear-gradient(135deg, #DBEAFE, #E0E7FF);
           border: 2px solid #BFDBFE;
           box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+          flex: 0 0 auto;
         }
 
         .dev-photo img {
@@ -253,12 +258,14 @@ export function PengembangPage() {
 
         .dev-info {
           flex: 1;
+          min-width: 0;
         }
 
         .dev-name {
           font-size: 16px;
           font-weight: 700;
           color: #0F172A;
+          overflow-wrap: anywhere;
         }
 
         .dev-badge {
@@ -282,6 +289,7 @@ export function PengembangPage() {
         .social-links {
           display: flex;
           gap: 8px;
+          flex-wrap: wrap;
         }
 
         .social-btn {
@@ -319,7 +327,7 @@ export function PengembangPage() {
         }
 
         .about-section {
-          padding: 0 24px 52px;
+          padding: 0 clamp(16px, 4vw, 24px) clamp(36px, 7vw, 52px);
         }
 
         .about-card {
@@ -328,9 +336,10 @@ export function PengembangPage() {
           background: white;
           border: 1px solid #E2E8F0;
           border-radius: 20px;
-          padding: 28px 32px;
+          padding: clamp(20px, 4vw, 28px) clamp(18px, 5vw, 32px);
           display: flex;
           gap: 28px;
+          min-width: 0;
         }
 
         .about-icon-bg {
@@ -343,6 +352,7 @@ export function PengembangPage() {
           align-items: center;
           justify-content: center;
           color: #2563EB;
+          flex: 0 0 auto;
         }
 
         .about-title {
@@ -369,6 +379,7 @@ export function PengembangPage() {
           font-size: 12.5px;
           color: #3730A3;
           margin: 14px 0;
+          max-width: 100%;
         }
 
         .about-github-btn {
@@ -382,6 +393,8 @@ export function PengembangPage() {
           background: linear-gradient(135deg, #2563EB, #4F46E5);
           color: white;
           text-decoration: none;
+          max-width: 100%;
+          justify-content: center;
         }
 
         .footer-note {
@@ -393,6 +406,84 @@ export function PengembangPage() {
 
         .heart {
           color: #F43F5E;
+        }
+
+        @media (max-width: 900px) {
+          .stats-bar {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .dev-grid {
+            grid-template-columns: 1fr;
+            max-width: 680px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .blob,
+          .dot-grid,
+          .dot-grid-right {
+            display: none;
+          }
+
+          .badge-pill {
+            margin-bottom: 14px;
+          }
+
+          .hero-desc {
+            margin-bottom: 24px;
+          }
+
+          .stats-bar {
+            grid-template-columns: 1fr;
+            max-width: 360px;
+          }
+
+          .stat-item {
+            padding: 12px 14px;
+          }
+
+          .dev-card {
+            flex-direction: column;
+            padding: 18px;
+            gap: 14px;
+          }
+
+          .dev-photo {
+            width: 86px;
+            height: 86px;
+          }
+
+          .about-card {
+            flex-direction: column;
+            gap: 18px;
+          }
+
+          .about-icon-bg {
+            width: 64px;
+            height: 64px;
+          }
+
+          .about-note,
+          .about-github-btn {
+            width: 100%;
+          }
+
+          .footer-note {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .dev-card {
+            padding: 16px;
+          }
+
+          .social-btn {
+            width: 32px;
+            height: 32px;
+          }
         }
       `}</style>
 
