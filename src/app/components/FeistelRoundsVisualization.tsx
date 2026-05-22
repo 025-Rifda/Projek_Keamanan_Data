@@ -531,7 +531,7 @@ function SBoxTable({
         </div>
       </div>
       <div className="overflow-x-auto overscroll-x-contain pb-1">
-        <div className="grid min-w-[480px] grid-cols-[30px_repeat(16,minmax(26px,1fr))] gap-1 text-center text-[10px] sm:min-w-[520px] sm:grid-cols-[34px_repeat(16,minmax(28px,1fr))]">
+        <div className="grid min-w-[560px] grid-cols-[34px_repeat(16,minmax(30px,1fr))] gap-1 text-center text-[10px]">
           <div className="rounded-[5px] bg-[#F8FAFC] py-1 text-[#94A3B8]">r/c</div>
           {Array.from({ length: 16 }, (_, col) => (
             <div key={`col-${col}`} className={`rounded-[5px] py-1 font-semibold ${col === column ? 'bg-[#FDE68A] text-[#92400E]' : 'bg-[#F8FAFC] text-[#64748B]'}`}>
@@ -840,7 +840,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
         {sboxIndexes.map((index) => {
           const chunk = chunks[index] ?? '000000';
           const output = outputs[index] ?? '0000';
@@ -854,7 +854,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
               key={`sbox-card-${index}`}
               type="button"
               onClick={() => setActiveBox(index)}
-              className={`flex min-h-[148px] min-w-0 flex-col gap-3 rounded-[12px] border p-3 text-left transition-colors sm:min-h-[164px] sm:p-4 ${
+              className={`flex min-h-[148px] min-w-[220px] flex-[0_0_220px] flex-col gap-3 rounded-[12px] border p-3 text-left transition-colors sm:min-h-[164px] sm:min-w-0 sm:flex-auto sm:p-4 ${
                 active ? 'border-[#7C3AED] bg-[#F5F3FF] shadow-[0_0_0_3px_rgba(221,214,254,0.9)]' : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]'
               }`}
             >

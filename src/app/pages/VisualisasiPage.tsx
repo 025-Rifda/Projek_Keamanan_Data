@@ -1092,7 +1092,7 @@ function Step3StoryVisual({
     outputOrderMap?: Map<number, number>;
     enableHover?: boolean;
   }) => (
-    <div className={`grid min-w-0 ${columns} gap-1 sm:gap-1.5`}>
+    <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
       {bits.split('').map((bit, index) => {
         const position = index + 1 + offset;
         const isParity = parityPositions ? parityPositions.has(position) : false;
@@ -1144,7 +1144,7 @@ function Step3StoryVisual({
     }[tone];
 
     return (
-      <div className={`grid min-w-0 ${columns} gap-1 sm:gap-1.5`}>
+      <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
         {bits.split('').map((bit, index) => {
           const globalIndex = index + offset;
           const isActive = globalIndex === activeIndex;
@@ -1921,6 +1921,8 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
   const [replayKey, setReplayKey] = useState(0);
   const [activeFpIndex, setActiveFpIndex] = useState(0);
   const [isFpPlaying, setIsFpPlaying] = useState(false);
+  const [swapPhase, setSwapPhase] = useState<'before' | 'swapping' | 'after'>('before');
+  const [isSwapPlaying, setIsSwapPlaying] = useState(false);
 
   const stages = [
     { title: 'Final Swap', caption: 'R16 || L16' },
@@ -1939,6 +1941,7 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
 
   const fpSourcePosition = DES_FINAL_PERMUTATION_TABLE[activeFpIndex];
   const fpSourceBit = preOutputBits[fpSourcePosition - 1];
+  const fpOutputBit = finalBits[activeFpIndex];
 
   useEffect(() => {
     if (!isFpPlaying) return undefined;
@@ -1954,6 +1957,19 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
     return () => window.clearInterval(timer);
   }, [isFpPlaying]);
 
+  const startSwap = () => {
+    setSwapPhase('before');
+    setIsSwapPlaying(true);
+    window.setTimeout(() => setSwapPhase('swapping'), 400);
+    window.setTimeout(() => setSwapPhase('after'), 1100);
+    window.setTimeout(() => setIsSwapPlaying(false), 1500);
+  };
+
+  const resetSwap = () => {
+    setSwapPhase('before');
+    setIsSwapPlaying(false);
+  };
+
   const renderStage0 = () => (
     <div className="space-y-5">
       <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
@@ -1963,10 +1979,27 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
       </div>
 
       <div className="rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-sm">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-[15px] font-semibold text-[#0F172A]">Sebelum dan sesudah final swap</div>
             <p className="mt-1 text-[12px] text-[#64748B]">Nilai bit tidak berubah, hanya posisi blok kiri dan kanan yang bertukar.</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={resetSwap}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-[12px] font-medium text-[#0F172A] hover:bg-[#F8FAFC]"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reset
+            </button>
+            <button
+              type="button"
+              onClick={startSwap}
+              disabled={isSwapPlaying}
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2 text-[12px] font-medium text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+            >
+              <Play className="h-3.5 w-3.5" /> Mulai
+            </button>
           </div>
         </div>
 
@@ -2000,12 +2033,24 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
           </div>
 
           <div className="flex items-center justify-center py-2 lg:py-0 lg:pt-24">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] text-[#92400E] shadow-sm">
+            <motion.div
+              animate={swapPhase === 'swapping' ? { rotate: 180, scale: 1.15 } : { rotate: 0, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] text-[#92400E] shadow-sm"
+            >
               <ArrowRight className="h-5 w-5 rotate-90 lg:rotate-0" />
-            </div>
+            </motion.div>
           </div>
 
-          <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] p-4">
+          <motion.div
+            animate={
+              swapPhase === 'before' ? { opacity: 0.45, y: 0 } :
+              swapPhase === 'swapping' ? { opacity: 0.7, y: -6 } :
+              { opacity: 1, y: 0 }
+            }
+            transition={{ duration: 0.5 }}
+            className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] p-4"
+          >
             <div className="mb-3 text-[12px] font-semibold text-[#92400E]">Sesudah swap - R16 || L16 (preoutput)</div>
             <div className="space-y-3">
               <div className="rounded-[12px] border border-[#BBF7D0] bg-white p-3">
@@ -2031,7 +2076,7 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
                 <div className="mt-2 font-mono text-[10px] text-[#64748B]">{finalRound?.newL}</div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -2056,12 +2101,33 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
         </p>
       </div>
 
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+      <div className="rounded-[14px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p className="text-[13px] text-[#1D4ED8]" style={{ lineHeight: 1.65 }}>
+            Output bit ke-<span className="font-semibold">{activeFpIndex + 1}</span> mengambil input posisi <span className="font-semibold">{fpSourcePosition}</span>. Nilai bit: <span className="font-mono font-semibold">{fpSourceBit}</span> <span className="font-mono font-semibold">{fpOutputBit}</span>.
+          </p>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[12px] border border-[#BFDBFE] bg-white px-3 py-2 shrink-0">
+            <div className="text-center">
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-[#92400E]">Input</div>
+              <div className="font-mono text-[16px] font-semibold text-[#78350F]">{fpSourcePosition}</div>
+              <div className="font-mono text-[11px] text-[#92400E]">bit {fpSourceBit}</div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-[#64748B]" />
+            <div className="text-center">
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-[#15803D]">Output</div>
+              <div className="font-mono text-[16px] font-semibold text-[#14532D]">{activeFpIndex + 1}</div>
+              <div className="font-mono text-[11px] text-[#15803D]">bit {fpOutputBit}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-3">
           <div className="rounded-[14px] border border-[#FDE68A] bg-white p-3">
-            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#92400E]">Input FP - R16 || L16 (64 bit)</div>
-              <div className="break-all font-mono text-[11px] font-semibold text-[#78350F]">{details.preOutput}</div>
+              <div className="font-mono text-[11px] font-semibold text-[#78350F]">{details.preOutput}</div>
             </div>
             <div className="grid grid-cols-8 gap-1">
               {preOutputBits.map((bit, index) => {
@@ -2087,21 +2153,8 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={isFpPlaying ? () => setIsFpPlaying(false) : () => { setActiveFpIndex((c) => c >= DES_FINAL_PERMUTATION_TABLE.length - 1 ? 0 : c); setIsFpPlaying(true); }}
-              className="inline-flex items-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[12px] font-medium text-white hover:bg-[#1D4ED8]"
-            >
-              {isFpPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              {isFpPlaying ? 'Pause' : 'Mulai'}
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
           <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-3">
-            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <div className="mb-3 flex items-center justify-between gap-2">
               <div className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#0F172A]">
                 <Table2 className="h-4 w-4 text-[#2563EB]" /> Tabel Final Permutation (FP)
               </div>
@@ -2134,34 +2187,103 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="rounded-[14px] border border-[#BBF7D0] bg-white p-3">
-        <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Output FP - ciphertext bits (64 bit)</div>
-          <div className="break-all font-mono text-[11px] font-semibold text-[#14532D]">{details.finalOutput}</div>
-        </div>
-        <div className="grid grid-cols-8 gap-1 sm:grid-cols-16">
-          {finalBits.map((bit, index) => {
-            const isActive = index === activeFpIndex;
-            return (
-              <motion.div
-                key={`fp-out-${index}`}
-                animate={{ scale: isActive ? 1.1 : 1 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-                title={`Bit ${index + 1}`}
-                className={`flex h-7 items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
-                  isActive
-                    ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_4px_12px_rgba(37,99,235,0.25)]'
-                    : bit === '1'
-                      ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
-                      : 'border-[#E2E8F0] bg-white text-[#94A3B8]'
-                }`}
+        <div className="space-y-3">
+          <div className="rounded-[14px] border border-[#BBF7D0] bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#15803D]">Output FP - ciphertext bits (64 bit)</div>
+              <div className="font-mono text-[11px] font-semibold text-[#14532D]">{details.finalOutput}</div>
+            </div>
+            <div className="grid grid-cols-8 gap-1">
+              {finalBits.map((bit, index) => {
+                const isActive = index === activeFpIndex;
+                return (
+                  <motion.div
+                    key={`fp-out-${index}`}
+                    animate={{ scale: isActive ? 1.1 : 1 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                    title={`Bit ${index + 1}`}
+                    className={`flex h-7 items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+                      isActive
+                        ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_4px_12px_rgba(37,99,235,0.25)]'
+                        : bit === '1'
+                          ? 'border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]'
+                          : 'border-[#E2E8F0] bg-white text-[#94A3B8]'
+                    }`}
+                  >
+                    {bit}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-4">
+            <div className="text-[13px] font-semibold text-[#0F172A] mb-3">Aturan aktif</div>
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setActiveFpIndex((c) => Math.max(0, c - 1))}
+                disabled={activeFpIndex === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] disabled:opacity-40"
               >
-                {bit}
-              </motion.div>
-            );
-          })}
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="flex-1 rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-center">
+                <div className="font-mono text-[14px] font-semibold text-[#0F172A]">
+                  output {activeFpIndex + 1} input {fpSourcePosition}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveFpIndex((c) => Math.min(DES_FINAL_PERMUTATION_TABLE.length - 1, c + 1))}
+                disabled={activeFpIndex === DES_FINAL_PERMUTATION_TABLE.length - 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] disabled:opacity-40"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-[12px] border border-[#FDE68A] bg-[#FFFBEB] p-3">
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-[#92400E]">Input bit</div>
+                <div className="mt-1 font-mono text-[22px] font-semibold text-[#78350F]">{fpSourceBit}</div>
+                <div className="text-[9px] text-[#92400E]">posisi {fpSourcePosition}</div>
+              </div>
+              <div className="flex items-center justify-center">
+                <ArrowRight className="h-4 w-4 text-[#94A3B8]" />
+              </div>
+              <div className="rounded-[12px] border border-[#BBF7D0] bg-[#F0FDF4] p-3">
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-[#15803D]">Output bit</div>
+                <div className="mt-1 font-mono text-[22px] font-semibold text-[#14532D]">{fpOutputBit}</div>
+                <div className="text-[9px] text-[#15803D]">posisi {activeFpIndex + 1}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={isFpPlaying ? () => setIsFpPlaying(false) : () => { setActiveFpIndex((c) => c >= DES_FINAL_PERMUTATION_TABLE.length - 1 ? 0 : c); setIsFpPlaying(true); }}
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[12px] font-medium text-white hover:bg-[#1D4ED8]"
+            >
+              {isFpPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              {isFpPlaying ? 'Pause' : 'Mulai'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsFpPlaying(false); setActiveFpIndex((c) => Math.max(0, c - 1)); }}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] font-medium text-[#0F172A] hover:bg-[#F8FAFC]"
+            >
+              <SkipBack className="h-3.5 w-3.5" /> Sebelumnya
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsFpPlaying(false); setActiveFpIndex((c) => Math.min(DES_FINAL_PERMUTATION_TABLE.length - 1, c + 1)); }}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[12px] font-medium text-[#0F172A] hover:bg-[#F8FAFC]"
+            >
+              Selanjutnya <SkipForward className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2500,8 +2622,8 @@ export function VisualisasiPage() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] pt-4 sm:pt-6 md:pt-8 pb-8 md:pb-12 px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10">
-      <div className="w-full max-w-[1180px] mx-auto">
+    <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] pt-6 md:pt-8 pb-8 md:pb-12 px-4 md:px-8 lg:px-16 xl:px-[290px]">
+      <div className="max-w-[860px] mx-auto">
         <div className="mb-3.5">
           <div className="mb-2 text-[11px] text-[#94A3B8]">
             DES / {step.badgeLabel} / {step.breadcrumbLabel}
@@ -2556,7 +2678,7 @@ export function VisualisasiPage() {
           </p>
         </div>
 
-        <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] px-4 py-4 sm:px-5 mb-3">
+        <div className="bg-white border-[0.5px] border-[#E2E8F0] rounded-[12px] px-5 py-4 mb-3">
           <div
             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[20px] border-[0.5px]"
             style={{
@@ -2602,7 +2724,7 @@ export function VisualisasiPage() {
           </>
         )}
 
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mt-4">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 mt-4">
           <button
             onClick={handlePrev}
             disabled={currentStep === 0}
@@ -2612,7 +2734,7 @@ export function VisualisasiPage() {
             Sebelumnya
           </button>
 
-          <div className="flex flex-col gap-2 order-1 sm:flex-row md:order-2">
+          <div className="flex items-center gap-2 order-1 md:order-2">
             <button
               onClick={() =>
                 navigate('/uji-coba', {
@@ -2624,7 +2746,7 @@ export function VisualisasiPage() {
                   },
                 })
               }
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-[8px] border-[0.5px] border-[#E2E8F0] bg-transparent text-[13px] text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
             >
               <Edit className="w-3.5 h-3.5" />
               Ubah input
@@ -2641,7 +2763,7 @@ export function VisualisasiPage() {
                     },
                   })
                 }
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] bg-[#16A34A] text-white text-[13px] font-medium hover:bg-[#15803D] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#16A34A] text-white text-[13px] font-medium hover:bg-[#15803D] transition-colors"
               >
                 <Check className="w-3.5 h-3.5" />
                 Selesai
@@ -2649,7 +2771,7 @@ export function VisualisasiPage() {
             ) : (
               <button
                 onClick={handleNext}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] bg-[#2563EB] text-white text-[13px] font-medium hover:bg-[#1D4ED8] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#2563EB] text-white text-[13px] font-medium hover:bg-[#1D4ED8] transition-colors"
               >
                 Selanjutnya
                 <ChevronRight className="w-3.5 h-3.5" />
