@@ -2622,8 +2622,8 @@ export function VisualisasiPage() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-56px)] bg-[#F8FAFC] pt-6 md:pt-8 pb-8 md:pb-12 px-4 md:px-8 lg:px-16 xl:px-[290px]">
-      <div className="max-w-[860px] mx-auto">
+    <div className="w-full min-h-[calc(100vh-56px)] overflow-x-hidden bg-[#F8FAFC] pt-4 sm:pt-6 md:pt-8 pb-8 md:pb-12 px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10">
+      <div className="w-full max-w-[1180px] mx-auto">
         <div className="mb-3.5">
           <div className="mb-2 text-[11px] text-[#94A3B8]">
             DES / {step.badgeLabel} / {step.breadcrumbLabel}

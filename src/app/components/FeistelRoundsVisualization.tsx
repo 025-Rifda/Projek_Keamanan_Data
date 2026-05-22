@@ -584,10 +584,10 @@ function InputStep({ round, bits }: { round: FeistelRoundData; bits: ReturnType<
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="w-full max-w-full min-w-0 space-y-3">
         <FeistelDiagram round={round} />
       </div>
-      <div className="space-y-3">
+      <div className="w-full max-w-full min-w-0 space-y-3">
         <FlowCard title={`Alur ronde ${round.round}`} rows={flowRows} />
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
@@ -645,7 +645,7 @@ function ExpansionStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
 
   return (
     <>
-      <div className="space-y-4 xl:col-span-2">
+      <div className="w-full max-w-full min-w-0 space-y-4 overflow-hidden xl:col-span-2">
         <div className="rounded-[14px] border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3">
           <p className="text-[12px] text-[#15803D]" style={{ lineHeight: 1.65 }}>
             Subkey K berukuran 48 bit. Agar bisa di-XOR, R juga harus 48 bit. Expansion menyalin beberapa bit tepi sehingga bit-bit tersebut memengaruhi dua S-Box sekaligus dan memperkuat difusi.
@@ -829,7 +829,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
   }, [bits.xorWithKey]);
 
   return (
-    <div className="space-y-4 xl:col-span-2">
+    <div className="w-full max-w-full min-w-0 space-y-4 overflow-hidden xl:col-span-2">
       <div className="rounded-[14px] border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3">
         <div className="mb-2 text-[12px] font-semibold text-[#5B21B6]">Cara membaca S-Box</div>
         <p className="text-[12px] text-[#6D28D9]" style={{ lineHeight: 1.65 }}>
@@ -840,7 +840,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         </p>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
+      <div className="flex w-full max-w-full min-w-0 gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
         {sboxIndexes.map((index) => {
           const chunk = chunks[index] ?? '000000';
           const output = outputs[index] ?? '0000';
@@ -899,7 +899,7 @@ function SBoxStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         })}
       </div>
 
-      <div className="space-y-3">
+      <div className="w-full max-w-full min-w-0 space-y-3">
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
           {sboxIndexes.map((index) => {
             const active = index === activeBox;
@@ -970,7 +970,7 @@ function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
-        <div className="space-y-3">
+        <div className="w-full max-w-full min-w-0 space-y-3">
           <BitGrid bits={bits.sboxOutput} label="Input dari S-Box (32 bit)" activeIndexes={[activeInputIndex]} />
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
@@ -983,7 +983,7 @@ function PermutationStep({ bits }: { bits: ReturnType<typeof useRoundBits> }) {
             </button>
           </div>
         </div>
-        <div className="space-y-3">
+        <div className="w-full max-w-full min-w-0 space-y-3">
           <MappingTable
             table={DES_PERMUTATION_P_TABLE}
             inputBits={bits.sboxOutput}
@@ -1169,7 +1169,7 @@ function StepContent({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.22 }}
-        className="rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] p-4 md:p-5"
+        className="w-full max-w-full min-w-0 overflow-hidden rounded-[18px] border border-[#E2E8F0] bg-[#F8FAFC] p-3 sm:p-4 md:p-5"
       >
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -1300,3 +1300,4 @@ export function FeistelRoundsVisualization({ data, tutorialMode = false }: Feist
     </div>
   );
 }
+
