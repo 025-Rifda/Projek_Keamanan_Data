@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Lock, Pencil, FileText, Copy, Eye, AlertCircle, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAlgorithm } from '../context/AlgorithmContext';
+import { useTheme } from '../context/ThemeContext';
 import { decryptDES, encryptDES } from '../utils/des';
 import { appendCryptoHistory } from '../utils/history';
 import {
@@ -20,6 +21,7 @@ type UjiCobaRouteState = {
 
 export function EnkripsiPage() {
   const location = useLocation();
+  const { isDark } = useTheme();
   const routeState = (location.state as UjiCobaRouteState | null) ?? null;
   const {
     algorithm,
@@ -141,30 +143,105 @@ export function EnkripsiPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap');
 
-        .enkripsi-page * {
-          font-family: 'Sora', sans-serif;
+        :root {
+          --bg-gradient-start-light: #F0F4FF;
+          --bg-gradient-end-light: transparent;
+          --bg-solid-light: var(--bg-primary);
+          --card-bg-light: var(--bg-card);
+          --card-border-light: var(--border-color);
+          --text-primary-light: var(--text-primary);
+          --text-secondary-light: var(--text-secondary);
+          --text-muted-light: var(--text-muted);
+          --input-bg-light: var(--bg-input);
+          --input-border-light: var(--border-color);
+          --accent-light: #2563EB;
+          --accent-gradient-start-light: #2563EB;
+          --accent-gradient-end-light: #4F46E5;
+          --result-bg-light: #F0F7FF;
+          --result-border-light: #BFDBFE;
+          --result-text-light: #1D4ED8;
+          --error-bg-light: #FEF2F2;
+          --error-border-light: #FECACA;
+          --error-text-light: #B91C1C;
+          --stat-bg-light: #F8FAFC;
+          --stat-border-light: #E2E8F0;
+          --mode-toggle-bg-light: #F8FAFC;
+          --mode-toggle-border-light: #E2E8F0;
+          --icon-bg-light: #EEF2FF;
+          --shadow-sm-light: 0 2px 12px rgba(37,99,235,0.06), 0 1px 2px rgba(0,0,0,0.04);
+          --shadow-md-light: 0 6px 24px rgba(37,99,235,0.10), 0 2px 4px rgba(0,0,0,0.05);
+          --shadow-button-light: 0 4px 16px rgba(37,99,235,0.28);
         }
-        .enkripsi-page .font-mono {
-          font-family: 'IBM Plex Mono', monospace !important;
+
+        .dark {
+          --bg-gradient-start-dark: var(--bg-primary);
+          --bg-gradient-end-dark: #020617;
+          --bg-solid-dark: var(--bg-primary);
+          --card-bg-dark: var(--bg-card);
+          --card-border-dark: var(--border-color);
+          --text-primary-dark: var(--text-primary);
+          --text-secondary-dark: var(--text-secondary);
+          --text-muted-dark: var(--text-muted);
+          --input-bg-dark: var(--bg-input);
+          --input-border-dark: var(--border-color);
+          --accent-dark: #3B82F6;
+          --accent-gradient-start-dark: #3B82F6;
+          --accent-gradient-end-dark: #6366F1;
+          --result-bg-dark: #1E293B;
+          --result-border-dark: #3B82F6;
+          --result-text-dark: #60A5FA;
+          --error-bg-dark: #2D1A1A;
+          --error-border-dark: #7F2D2D;
+          --error-text-dark: #F87171;
+          --stat-bg-dark: #0F172A;
+          --stat-border-dark: #334155;
+          --mode-toggle-bg-dark: #0F172A;
+          --mode-toggle-border-dark: #334155;
+          --icon-bg-dark: #1E293B;
+          --shadow-sm-dark: 0 2px 12px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+          --shadow-md-dark: 0 6px 24px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+          --shadow-button-dark: 0 4px 16px rgba(59,130,246,0.4);
         }
 
         .enkripsi-page {
-          background: #F0F4FF;
-          background-image:
-            radial-gradient(ellipse at 20% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
+          font-family: 'Sora', sans-serif;
+          background: var(--bg-solid-light);
+          background-image: radial-gradient(ellipse at 20% 0%, rgba(37, 99, 235, 0.07) 0%, transparent 60%),
+                            radial-gradient(ellipse at 80% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
           min-height: calc(100vh - 56px);
+          transition: background 0.3s ease;
+        }
+
+        .dark .enkripsi-page {
+          background: var(--bg-solid-dark);
+          background-image: radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 60%),
+                            radial-gradient(ellipse at 80% 100%, rgba(99, 102, 241, 0.12) 0%, transparent 60%);
+        }
+
+        .font-mono {
+          font-family: 'IBM Plex Mono', monospace !important;
         }
 
         .card {
-          background: #fff;
-          border: 1px solid #E2E8F0;
+          background: var(--card-bg-light);
+          border: 1px solid var(--card-border-light);
           border-radius: 16px;
-          box-shadow: 0 2px 12px rgba(37,99,235,0.06), 0 1px 2px rgba(0,0,0,0.04);
-          transition: box-shadow 0.2s;
+          box-shadow: var(--shadow-sm-light);
+          transition: box-shadow 0.2s, background 0.3s, border-color 0.3s;
         }
+
+        .dark .card {
+          background: var(--card-bg-dark);
+          border-color: var(--card-border-dark);
+          box-shadow: var(--shadow-sm-dark);
+        }
+
         .card:hover {
-          box-shadow: 0 6px 24px rgba(37,99,235,0.10), 0 2px 4px rgba(0,0,0,0.05);
+          box-shadow: var(--shadow-md-light);
+        }
+
+        .dark .card:hover {
+          box-shadow: var(--shadow-md-dark);
         }
 
         .algo-badge {
@@ -173,21 +250,39 @@ export function EnkripsiPage() {
           gap: 8px;
           padding: 8px 18px;
           border-radius: 999px;
-          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          background: linear-gradient(135deg, var(--accent-gradient-start-light), var(--accent-gradient-end-light));
           color: #fff;
           font-size: 13px;
           font-weight: 600;
           letter-spacing: 0.01em;
           box-shadow: 0 4px 14px rgba(37,99,235,0.30);
+          border: none;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+
+        .dark .algo-badge {
+          background: linear-gradient(135deg, var(--accent-gradient-start-dark), var(--accent-gradient-end-dark));
+          box-shadow: 0 4px 14px rgba(59,130,246,0.4);
+        }
+
+        .algo-badge:hover {
+          opacity: 0.9;
         }
 
         .mode-toggle {
           display: flex;
           border-radius: 10px;
-          border: 1.5px solid #E2E8F0;
+          border: 1.5px solid var(--mode-toggle-border-light);
           overflow: hidden;
-          background: #F8FAFC;
+          background: var(--mode-toggle-bg-light);
         }
+
+        .dark .mode-toggle {
+          border-color: var(--mode-toggle-border-dark);
+          background: var(--mode-toggle-bg-dark);
+        }
+
         .mode-btn {
           flex: 1;
           padding: 9px 0;
@@ -196,7 +291,7 @@ export function EnkripsiPage() {
           cursor: pointer;
           border: none;
           background: transparent;
-          color: #64748B;
+          color: var(--text-secondary-light);
           transition: all 0.18s;
           display: flex;
           align-items: center;
@@ -204,57 +299,101 @@ export function EnkripsiPage() {
           gap: 6px;
           font-family: 'Sora', sans-serif;
         }
+
+        .dark .mode-btn {
+          color: var(--text-secondary-dark);
+        }
+
         .mode-btn.active {
-          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          background: linear-gradient(135deg, var(--accent-gradient-start-light), var(--accent-gradient-end-light));
           color: #fff;
           box-shadow: 0 2px 8px rgba(37,99,235,0.18);
         }
+
+        .dark .mode-btn.active {
+          background: linear-gradient(135deg, var(--accent-gradient-start-dark), var(--accent-gradient-end-dark));
+        }
+
         .mode-btn:not(.active):hover {
           background: #EEF2FF;
-          color: #2563EB;
+          color: var(--accent-light);
+        }
+
+        .dark .mode-btn:not(.active):hover {
+          background: #1E293B;
+          color: var(--accent-dark);
         }
 
         .field-label {
           font-size: 11px;
           font-weight: 600;
-          color: #64748B;
+          color: var(--text-secondary-light);
           letter-spacing: 0.06em;
           text-transform: uppercase;
           margin-bottom: 6px;
           display: block;
         }
 
+        .dark .field-label {
+          color: var(--text-secondary-dark);
+        }
+
         .text-input, .key-input {
           width: 100%;
           padding: 10px 12px;
-          border: 1.5px solid #E2E8F0;
+          border: 1.5px solid var(--input-border-light);
           border-radius: 9px;
           font-size: 13px;
           font-family: 'IBM Plex Mono', monospace !important;
-          background: #FAFBFF;
-          color: #0F172A;
+          background: var(--input-bg-light);
+          color: var(--text-primary-light);
           outline: none;
-          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+          transition: border-color 0.18s, box-shadow 0.18s, background 0.3s, color 0.3s;
           box-sizing: border-box;
         }
+
+        .dark .text-input, 
+        .dark .key-input {
+          background: var(--input-bg-dark);
+          border-color: var(--input-border-dark);
+          color: var(--text-primary-dark);
+        }
+
         .text-input:focus, .key-input:focus {
-          border-color: #2563EB;
+          border-color: var(--accent-light);
           box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
           background: #fff;
         }
+
+        .dark .text-input:focus, 
+        .dark .key-input:focus {
+          border-color: var(--accent-dark);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+          background: var(--input-bg-dark);
+        }
+
         .text-input {
           resize: none;
         }
 
         .byte-hint {
           font-size: 10px;
-          color: #94A3B8;
+          color: var(--text-muted-light);
           margin-top: 5px;
           font-family: 'IBM Plex Mono', monospace;
         }
+
+        .dark .byte-hint {
+          color: var(--text-muted-dark);
+        }
+
         .byte-hint span {
-          color: #2563EB;
+          color: var(--accent-light);
           font-weight: 600;
+        }
+
+        .dark .byte-hint span {
+          color: var(--accent-dark);
         }
 
         .process-btn {
@@ -265,51 +404,75 @@ export function EnkripsiPage() {
           gap: 8px;
           padding: 12px;
           border-radius: 10px;
-          background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+          background: linear-gradient(135deg, var(--accent-gradient-start-light), var(--accent-gradient-end-light));
           color: #fff;
           font-size: 13px;
           font-weight: 600;
           border: none;
           cursor: pointer;
           letter-spacing: 0.01em;
-          box-shadow: 0 4px 16px rgba(37,99,235,0.28);
+          box-shadow: var(--shadow-button-light);
           transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
           font-family: 'Sora', sans-serif;
         }
+
+        .dark .process-btn {
+          background: linear-gradient(135deg, var(--accent-gradient-start-dark), var(--accent-gradient-end-dark));
+          box-shadow: var(--shadow-button-dark);
+        }
+
         .process-btn:hover:not(:disabled) {
           transform: translateY(-1px);
           box-shadow: 0 6px 20px rgba(37,99,235,0.35);
         }
+
         .process-btn:active:not(:disabled) {
           transform: translateY(0);
         }
+
         .process-btn:disabled {
           opacity: 0.55;
           cursor: not-allowed;
         }
 
         .result-box {
-          background: linear-gradient(135deg, #F0F7FF 0%, #EEF2FF 100%);
-          border: 1.5px solid #BFDBFE;
+          background: var(--result-bg-light);
+          border: 1.5px solid var(--result-border-light);
           border-radius: 10px;
           padding: 14px;
           min-height: 96px;
           position: relative;
+          transition: background 0.3s, border-color 0.3s;
         }
+
+        .dark .result-box {
+          background: var(--result-bg-dark);
+          border-color: var(--result-border-dark);
+        }
+
         .result-box pre {
           font-size: 13px;
           font-family: 'IBM Plex Mono', monospace;
-          color: #1D4ED8;
+          color: var(--result-text-light);
           white-space: pre-wrap;
           word-break: break-all;
           margin: 0;
           line-height: 1.6;
         }
+
+        .dark .result-box pre {
+          color: var(--result-text-dark);
+        }
+
         .result-box .empty-text {
-          color: #93C5FD;
+          color: var(--text-muted-light);
           font-size: 13px;
           font-family: 'IBM Plex Mono', monospace;
           font-style: italic;
+        }
+
+        .dark .result-box .empty-text {
+          color: var(--text-muted-dark);
         }
 
         .copy-btn {
@@ -318,9 +481,9 @@ export function EnkripsiPage() {
           right: 8px;
           padding: 5px 8px;
           border-radius: 6px;
-          border: 1px solid #BFDBFE;
-          background: #fff;
-          color: #2563EB;
+          border: 1px solid var(--result-border-light);
+          background: var(--card-bg-light);
+          color: var(--accent-light);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -330,38 +493,71 @@ export function EnkripsiPage() {
           transition: all 0.15s;
           font-family: 'Sora', sans-serif;
         }
+
+        .dark .copy-btn {
+          border-color: var(--result-border-dark);
+          background: var(--card-bg-dark);
+          color: var(--accent-dark);
+        }
+
         .copy-btn:hover {
           background: #EFF6FF;
           border-color: #93C5FD;
         }
 
+        .dark .copy-btn:hover {
+          background: #1E293B;
+          border-color: #60A5FA;
+        }
+
         .stat-card {
-          background: #F8FAFC;
-          border: 1px solid #E2E8F0;
+          background: var(--stat-bg-light);
+          border: 1px solid var(--stat-border-light);
           border-radius: 10px;
           padding: 14px 16px;
           flex: 1;
+          transition: background 0.3s, border-color 0.3s;
         }
+
+        .dark .stat-card {
+          background: var(--stat-bg-dark);
+          border-color: var(--stat-border-dark);
+        }
+
         .stat-card .stat-label {
           font-size: 10px;
           font-weight: 600;
-          color: #94A3B8;
+          color: var(--text-secondary-light);
           letter-spacing: 0.08em;
           text-transform: uppercase;
           margin-bottom: 4px;
         }
+
+        .dark .stat-card .stat-label {
+          color: var(--text-secondary-dark);
+        }
+
         .stat-card .stat-value {
           font-size: 26px;
           font-weight: 700;
-          color: #0F172A;
+          color: var(--text-primary-light);
           line-height: 1;
           font-family: 'IBM Plex Mono', monospace;
         }
+
+        .dark .stat-card .stat-value {
+          color: var(--text-primary-dark);
+        }
+
         .stat-card .stat-unit {
           font-size: 10px;
-          color: #94A3B8;
+          color: var(--text-muted-light);
           margin-top: 3px;
           font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .dark .stat-card .stat-unit {
+          color: var(--text-muted-dark);
         }
 
         .visualize-btn {
@@ -372,20 +568,33 @@ export function EnkripsiPage() {
           gap: 8px;
           padding: 11px;
           border-radius: 10px;
-          border: 1.5px solid #E2E8F0;
+          border: 1.5px solid var(--card-border-light);
           background: transparent;
-          color: #334155;
+          color: var(--text-secondary-light);
           font-size: 13px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.15s;
           font-family: 'Sora', sans-serif;
         }
+
+        .dark .visualize-btn {
+          border-color: var(--card-border-dark);
+          color: var(--text-secondary-dark);
+        }
+
         .visualize-btn:hover:not(:disabled) {
           background: #EEF2FF;
           border-color: #C7D2FE;
-          color: #2563EB;
+          color: var(--accent-light);
         }
+
+        .dark .visualize-btn:hover:not(:disabled) {
+          background: #1E293B;
+          border-color: #818CF8;
+          color: var(--accent-dark);
+        }
+
         .visualize-btn:disabled {
           opacity: 0.45;
           cursor: not-allowed;
@@ -396,16 +605,26 @@ export function EnkripsiPage() {
           align-items: flex-start;
           gap: 8px;
           padding: 10px 12px;
-          background: #FEF2F2;
-          border: 1px solid #FECACA;
+          background: var(--error-bg-light);
+          border: 1px solid var(--error-border-light);
           border-radius: 8px;
           margin-bottom: 14px;
         }
+
+        .dark .error-box {
+          background: var(--error-bg-dark);
+          border-color: var(--error-border-dark);
+        }
+
         .error-box p {
           font-size: 12px;
-          color: #B91C1C;
+          color: var(--error-text-light);
           margin: 0;
           line-height: 1.5;
+        }
+
+        .dark .error-box p {
+          color: var(--error-text-dark);
         }
 
         .section-header {
@@ -414,41 +633,64 @@ export function EnkripsiPage() {
           gap: 8px;
           margin-bottom: 20px;
         }
+
         .section-header .icon-wrap {
           width: 32px;
           height: 32px;
           border-radius: 8px;
-          background: #EEF2FF;
+          background: var(--icon-bg-light);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #2563EB;
+          color: var(--accent-light);
           flex-shrink: 0;
+          transition: background 0.3s;
         }
+
+        .dark .section-header .icon-wrap {
+          background: var(--icon-bg-dark);
+          color: var(--accent-dark);
+        }
+
         .section-header h2 {
           font-size: 15px;
           font-weight: 600;
-          color: #0F172A;
+          color: var(--text-primary-light);
           margin: 0;
+        }
+
+        .dark .section-header h2 {
+          color: var(--text-primary-dark);
         }
 
         .format-hint {
           font-size: 11px;
-          color: #94A3B8;
+          color: var(--text-muted-light);
           margin-top: -10px;
           margin-bottom: 16px;
           padding-left: 2px;
         }
 
+        .dark .format-hint {
+          color: var(--text-muted-dark);
+        }
+
         .no-viz-note {
           border-radius: 10px;
-          border: 1px dashed #CBD5E1;
-          background: #F8FAFC;
+          border: 1px dashed var(--card-border-light);
+          background: var(--stat-bg-light);
           padding: 12px 14px;
           font-size: 12px;
-          color: #94A3B8;
+          color: var(--text-muted-light);
           line-height: 1.6;
           text-align: center;
+          transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        .dark .no-viz-note {
+          border-color: var(--card-border-dark);
+          background: var(--stat-bg-dark);
+          color: var(--text-muted-dark);
         }
 
         @keyframes fadeIn {
@@ -470,19 +712,18 @@ export function EnkripsiPage() {
       <div className="enkripsi-page" style={{ padding: '28px 16px' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto' }}>
 
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Algoritma</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button
-                onClick={() => { setAlgorithm('DES'); resetProcessState(); }}
-                className="algo-badge"
-              >
-                <Lock size={14} />
-                DES (64-bit)
-              </button>
+          {/* Header with Algorithm Badge */}
+          <div style={{ textAlign: 'center', marginBottom: 28, display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={() => { setAlgorithm('DES'); resetProcessState(); }}
+                  className="algo-badge"
+                >
+                  <Lock size={14} />
+                  DES (64-bit)
+                </button>
+              </div>
             </div>
           </div>
 
@@ -560,7 +801,7 @@ export function EnkripsiPage() {
               {/* Error */}
               {(error || (!validation.isValid && (plaintext || key))) && (
                 <div className="error-box">
-                  <AlertCircle size={15} color="#EF4444" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <AlertCircle size={15} color={isDark ? '#F87171' : '#EF4444'} style={{ flexShrink: 0, marginTop: 1 }} />
                   <p>{error || validation.error}</p>
                 </div>
               )}

@@ -15,9 +15,20 @@ export function SplashScreen() {
   }, [navigate]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#020817] flex items-center justify-center">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#2563EB]" />
+    <div
+      className="relative w-full h-screen overflow-hidden flex items-center justify-center"
+      style={{
+        background: '#020817', // gelap solid
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {/* Background Gradient - selalu gelap */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to bottom right, #0F172A, #1E3A8A, #2563EB)',
+        }}
+      />
 
       {/* Glow Effects */}
       <div className="absolute top-[-120px] left-[-100px] w-[420px] h-[420px] bg-blue-500/30 blur-[120px] rounded-full" />
@@ -67,7 +78,14 @@ export function SplashScreen() {
         transition={{ duration: 1.2, ease: 'easeOut' }}
         className="relative z-10"
       >
-        <div className="relative w-[360px] rounded-[34px] border border-white/15 bg-white/10 backdrop-blur-2xl shadow-[0_20px_120px_rgba(37,99,235,0.45)] overflow-hidden">
+        <div
+          className="relative w-[360px] rounded-[34px] border backdrop-blur-2xl overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.1)', // selalu transparan gelap
+            borderColor: 'rgba(255,255,255,0.15)',
+            boxShadow: '0 20px 120px rgba(37,99,235,0.45)',
+          }}
+        >
           {/* Glass Shine */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none" />
 
@@ -118,7 +136,8 @@ export function SplashScreen() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-[42px] font-bold tracking-wide text-white drop-shadow-xl"
+              className="text-[42px] font-bold tracking-wide drop-shadow-xl"
+              style={{ color: '#ffffff' }}
             >
               CryptoDES
             </motion.h1>
@@ -128,7 +147,8 @@ export function SplashScreen() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-3 text-[15px] text-blue-100/80 tracking-[0.2em] uppercase"
+              className="mt-3 text-[15px] tracking-[0.2em] uppercase"
+              style={{ color: 'rgba(219,234,254,0.8)' }}
             >
               Secure Academic Encryption
             </motion.p>

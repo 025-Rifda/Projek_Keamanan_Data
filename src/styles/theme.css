@@ -2,6 +2,14 @@
 
 :root {
   --font-size: 16px;
+  --bg-primary: #F0F4FF;
+  --bg-card: #ffffff;
+  --bg-input: #F8FAFC;
+  --border-color: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --card-shadow: 0 2px 12px rgba(37,99,235,0.05);
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: #ffffff;
@@ -42,6 +50,14 @@
 }
 
 .dark {
+  --bg-primary: #0B1120;
+  --bg-card: #0F172A;
+  --bg-input: #1E293B;
+  --border-color: #1E3A64;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.4);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);

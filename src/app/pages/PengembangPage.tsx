@@ -4,6 +4,7 @@ import kakPhoto from '../../assets/developers/kak.jpeg';
 import elPhoto from '../../assets/developers/el.jpeg';
 import desPhoto from '../../assets/developers/des.jpeg';
 import raPhoto from '../../assets/developers/ra.jpeg';
+import { useTheme } from '../context/ThemeContext';
 
 const createGmailComposeLink = (email: string) =>
   `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
@@ -63,6 +64,8 @@ const stats = [
 ];
 
 export function PengembangPage() {
+  const { isDark } = useTheme();
+
   return (
     <>
       <style>{`
@@ -70,12 +73,19 @@ export function PengembangPage() {
 
         .pengembang-page {
           font-family: 'Sora', sans-serif;
-          background: #F0F4FF;
+          background: var(--bg-primary);
           background-image:
             radial-gradient(ellipse at 15% 0%, rgba(37,99,235,0.08) 0%, transparent 55%),
             radial-gradient(ellipse at 85% 5%, rgba(99,102,241,0.06) 0%, transparent 50%);
           min-height: calc(100vh - 56px);
           overflow-x: hidden;
+          transition: all 0.3s ease;
+        }
+
+        .dark .pengembang-page {
+          background-image:
+            radial-gradient(ellipse at 15% 0%, rgba(59,130,246,0.16) 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 5%, rgba(99,102,241,0.12) 0%, transparent 50%);
         }
 
         .pengembang-page * {
@@ -122,8 +132,8 @@ export function PengembangPage() {
           gap: 6px;
           padding: 7px 16px;
           border-radius: 999px;
-          background: rgba(255,255,255,0.85);
-          border: 1px solid #BFDBFE;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           box-shadow: 0 2px 8px rgba(37,99,235,0.10);
           font-size: 12px;
           font-weight: 600;
@@ -136,7 +146,7 @@ export function PengembangPage() {
         .hero-title {
           font-size: clamp(26px, 4vw, 40px);
           font-weight: 700;
-          color: #0F172A;
+          color: var(--text-primary);
           margin: 0 0 14px;
           line-height: 1.2;
           z-index: 2;
@@ -150,7 +160,7 @@ export function PengembangPage() {
 
         .hero-desc {
           font-size: clamp(13px, 2.5vw, 14px);
-          color: #475569;
+          color: var(--text-secondary);
           max-width: 560px;
           margin: 0 auto 36px;
           line-height: 1.75;
@@ -171,8 +181,8 @@ export function PengembangPage() {
           align-items: center;
           gap: 10px;
           padding: 12px 20px;
-          background: white;
-          border: 1px solid #E2E8F0;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           border-radius: 12px;
           min-width: 0;
         }
@@ -191,14 +201,14 @@ export function PengembangPage() {
         .stat-value {
           font-size: 16px;
           font-weight: 700;
-          color: #0F172A;
+          color: var(--text-primary);
           line-height: 1;
           font-family: 'IBM Plex Mono', monospace;
         }
 
         .stat-label {
           font-size: 11px;
-          color: #94A3B8;
+          color: var(--text-muted);
         }
 
         .dev-grid {
@@ -211,16 +221,16 @@ export function PengembangPage() {
         }
 
         .dev-card {
-          background: white;
-          border: 1px solid #E2E8F0;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           border-radius: 18px;
           padding: 22px;
           display: flex;
           gap: 18px;
           position: relative;
           min-width: 0;
-          box-shadow: 0 2px 12px rgba(37, 99, 235, 0.05);
-          transition: 0.2s;
+          box-shadow: var(--card-shadow);
+          transition: all 0.3s ease;
         }
 
         .dev-card:hover {
@@ -271,7 +281,7 @@ export function PengembangPage() {
         .dev-name {
           font-size: 16px;
           font-weight: 700;
-          color: #0F172A;
+          color: var(--text-primary);
           overflow-wrap: anywhere;
         }
 
@@ -288,7 +298,7 @@ export function PengembangPage() {
 
         .dev-desc {
           font-size: 12.5px;
-          color: #64748B;
+          color: var(--text-secondary);
           line-height: 1.65;
           margin-bottom: 14px;
         }
@@ -303,12 +313,12 @@ export function PengembangPage() {
           width: 34px;
           height: 34px;
           border-radius: 9px;
-          background: #F8FAFC;
-          border: 1px solid #E2E8F0;
+          background: var(--bg-input);
+          border: 1px solid var(--border-color);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #64748B;
+          color: var(--text-secondary);
           transition: 0.15s;
         }
 
@@ -340,8 +350,8 @@ export function PengembangPage() {
         .about-card {
           max-width: 1120px;
           margin: 0 auto;
-          background: white;
-          border: 1px solid #E2E8F0;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
           border-radius: 20px;
           padding: clamp(20px, 4vw, 28px) clamp(18px, 5vw, 32px);
           display: flex;
@@ -365,13 +375,13 @@ export function PengembangPage() {
         .about-title {
           font-size: 18px;
           font-weight: 700;
-          color: #0F172A;
+          color: var(--text-primary);
           margin-bottom: 10px;
         }
 
         .about-desc {
           font-size: 13.5px;
-          color: #475569;
+          color: var(--text-secondary);
           line-height: 1.75;
         }
 
@@ -407,7 +417,7 @@ export function PengembangPage() {
         .footer-note {
           text-align: center;
           font-size: 13px;
-          color: #94A3B8;
+          color: var(--text-muted);
           padding: 20px 0 32px;
         }
 
@@ -494,7 +504,7 @@ export function PengembangPage() {
         }
       `}</style>
 
-      <div className="pengembang-page">
+      <div className="pengembang-page" data-theme={isDark ? 'dark' : 'light'}>
         <section className="hero-section">
           <div className="blob blob-1" />
           <div className="blob blob-2" />
