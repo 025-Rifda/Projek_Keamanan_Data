@@ -181,6 +181,7 @@ function TutorialPanel({ enabled, content }: { enabled: boolean; content: Tutori
 }
 
 function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialMode: boolean }) {
+  const { isDark } = useTheme();
   const chars = details.inputText.padEnd(8, '\0').slice(0, 8).split('');
   const ascii = chars.map((char) => char.charCodeAt(0));
   const bytes = details.inputBits.match(/.{1,8}/g) ?? [];
@@ -217,6 +218,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
   const activeKeyCharLabel = activeKeyChar === '\0' ? 'posisi kosong' : activeKeyChar === ' ' ? 'spasi' : activeKeyChar;
   const activeKeyAscii = keyAscii[activeKeyCharIndex] ?? 0;
   const activeKeyByte = keyBytes[activeKeyCharIndex] ?? '00000000';
+  const asciiValueColor = isDark ? '#E2E8F0' : '#000000';
 
   const renderCharCard = (
     char: string,
@@ -243,7 +245,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
         className={`${cardClass} ${isActive ? activeRingClass : ''} rounded-[8px] px-3 py-2.5`}
       >
         <div className={`text-[18px] font-medium ${toneClass} mb-1`}>{formatChar(char)}</div>
-        <div className="text-[10px] text-[#64748B] mb-1">ASCII: {asciiValue}</div>
+        <div className="mb-1 text-[10px]" style={{ color: asciiValueColor }}>ASCII: {asciiValue}</div>
         <div className="text-[11px] font-mono text-[#CBD5E1]">{byte}</div>
       </motion.div>
     );
@@ -285,7 +287,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
             <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#3B82F6] md:rotate-0" />
             <div className="rounded-[12px] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-center ring-1 ring-[rgba(59,130,246,0.3)]">
               <div className="text-[10px] font-semibold text-[#64748B]">ASCII</div>
-              <div className="mt-1 font-mono text-[22px] font-semibold text-[#E2E8F0]">{activeAscii}</div>
+              <div className="mt-1 font-mono text-[22px] font-semibold" style={{ color: asciiValueColor }}>{activeAscii}</div>
             </div>
             <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#3B82F6] md:rotate-0" />
             <div className="rounded-[12px] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-center ring-1 ring-[rgba(59,130,246,0.3)]">
@@ -341,7 +343,7 @@ function Step1Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
             <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#7C3AED] md:rotate-0" />
             <div className="rounded-[12px] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-center ring-1 ring-[rgba(167,139,250,0.3)]">
               <div className="text-[10px] font-semibold text-[#64748B]">ASCII</div>
-              <div className="mt-1 font-mono text-[22px] font-semibold text-[#E2E8F0]">{activeKeyAscii}</div>
+              <div className="mt-1 font-mono text-[22px] font-semibold" style={{ color: asciiValueColor }}>{activeKeyAscii}</div>
             </div>
             <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-[#7C3AED] md:rotate-0" />
             <div className="rounded-[12px] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-center ring-1 ring-[rgba(167,139,250,0.3)]">
@@ -1465,8 +1467,8 @@ function Step3StoryVisual({
                         : 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B]'
                   }`}
                 >
-                  <span className="text-[11px] leading-none">Ronde {item.round}</span>
-                  <span className="mt-1 text-[13px] leading-none">{item.shift} bit</span>
+                  <span className="text-[12px] leading-none">Ronde {item.round}</span>
+                  <span className="mt-1 text-[16px] leading-none">{item.shift} bit</span>
                 </div>
               ))}
             </div>
@@ -1750,7 +1752,7 @@ function Step3StoryVisual({
                     : 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:bg-[rgba(37,99,235,0.1)]'
                 }`}
               >
-                K{item.round}
+                <span className="text-[14px] leading-none">K{item.round}</span>
               </button>
             ))}
           </div>
