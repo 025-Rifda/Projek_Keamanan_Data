@@ -2640,6 +2640,76 @@ export function VisualisasiPage() {
           fill: #F1F5F9 !important;
         }
 
+        .visualisasi-dark .feistel-diagram svg rect,
+        .visualisasi-dark .feistel-diagram svg circle {
+          fill: #0F172A !important;
+        }
+
+        .visualisasi-dark .feistel-diagram svg rect[stroke="#BFDBFE"] {
+          stroke: #2563EB !important;
+        }
+
+        .visualisasi-dark .feistel-diagram svg rect[stroke="#BBF7D0"] {
+          stroke: #22C55E !important;
+        }
+
+        .visualisasi-dark .feistel-diagram svg rect[stroke="#FDE68A"],
+        .visualisasi-dark .feistel-diagram svg circle[stroke="#F59E0B"] {
+          stroke: #F59E0B !important;
+        }
+
+        .visualisasi-dark .feistel-diagram svg rect[stroke="#FECDD3"] {
+          stroke: #FB7185 !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#F0FDF4\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#ECFDF5\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#ECFEFF\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#FFFBEB\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#FEF3C7\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#F5F3FF\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#EDE9FE\\]"] {
+          background-color: #172033 !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#2563EB\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#1D4ED8\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#1E40AF\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#7C3AED\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#0891B2\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#16A34A\\]"],
+        .visualisasi-dark .feistel-rounds [class*="bg-\\[#F59E0B\\]"] {
+          background-color: #1D3B72 !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#BBF7D0\\]"],
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#86EFAC\\]"],
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#A5F3FC\\]"],
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#FDE68A\\]"],
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#C4B5FD\\]"],
+        .visualisasi-dark .feistel-rounds [class*="border-\\[#DDD6FE\\]"] {
+          border-color: #315078 !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="ring-\\[#93C5FD\\]"],
+        .visualisasi-dark .feistel-rounds [class*="ring-\\[#DDD6FE\\]"] {
+          --tw-ring-color: rgba(96, 165, 250, 0.35) !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="ring-offset-white"] {
+          --tw-ring-offset-color: #0B1120 !important;
+        }
+
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#1D4ED8\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#15803D\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#0E7490\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#92400E\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#B45309\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#5B21B6\\]"],
+        .visualisasi-dark .feistel-rounds [class*="text-\\[#6D28D9\\]"] {
+          color: #BFDBFE !important;
+        }
+
         .visualisasi-dark svg line,
         .visualisasi-dark svg path:not([fill]) {
           stroke: #94A3B8;
