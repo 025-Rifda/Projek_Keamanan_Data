@@ -5,6 +5,12 @@
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>CryptoDES Web Application Design</title>
+      <script>
+        (() => {
+          const storedTheme = localStorage.getItem('theme');
+          document.documentElement.classList.toggle('dark', storedTheme ? storedTheme === 'dark' : true);
+        })();
+      </script>
       <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
     </head>
 
