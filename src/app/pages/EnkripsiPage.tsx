@@ -600,6 +600,23 @@ export function EnkripsiPage() {
           cursor: not-allowed;
         }
 
+        .visualize-btn-ready:not(:disabled) {
+          border-color: #60A5FA;
+          background: #EFF6FF;
+          color: var(--accent-light);
+          animation: visualizeBlink 1.15s ease-in-out infinite;
+        }
+
+        .dark .visualize-btn-ready:not(:disabled) {
+          border-color: #3B82F6;
+          background: #0F172A;
+          color: var(--accent-dark);
+        }
+
+        .visualize-btn-ready:not(:disabled) svg {
+          animation: visualizeIconBlink 1.15s ease-in-out infinite;
+        }
+
         .error-box {
           display: flex;
           align-items: flex-start;
@@ -704,6 +721,30 @@ export function EnkripsiPage() {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+
+        @keyframes visualizeBlink {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(37,99,235,0.35), 0 0 0 rgba(37,99,235,0);
+            transform: translateY(0);
+          }
+          50% {
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.16), 0 8px 22px rgba(37,99,235,0.28);
+            transform: translateY(-1px);
+          }
+        }
+
+        @keyframes visualizeIconBlink {
+          0%, 100% { opacity: 0.65; }
+          50% { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .visualize-btn-ready:not(:disabled),
+          .visualize-btn-ready:not(:disabled) svg {
+            animation: none;
+          }
+        }
+
         .spin {
           animation: spin 0.8s linear infinite;
         }
@@ -871,7 +912,8 @@ export function EnkripsiPage() {
               {/* Visualize / note */}
               {mode === 'encrypt' ? (
                 <button
-                  className="visualize-btn"
+                  type="button"
+                  className={`visualize-btn ${canOpenVisualization ? 'visualize-btn-ready' : ''}`}
                   onClick={handleVisualize}
                   disabled={!canOpenVisualization}
                 >
