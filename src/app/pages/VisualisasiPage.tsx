@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   ArrowRight,
   ChevronLeft,
@@ -12,8 +12,6 @@ import {
   Pause,
   Play,
   RotateCcw,
-  SkipBack,
-  SkipForward,
   Table2,
   FlaskConical,
   LockKeyhole,
@@ -748,46 +746,7 @@ function Step2Visual({ details, tutorialMode }: { details: DESDetails; tutorialM
             className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#2563EB] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            Mulai
-          </button>
-          {showDetail && (
-            <>
-              <button
-                type="button"
-                onClick={goNext}
-                className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-[13px] font-medium text-[#E2E8F0] transition-colors hover:bg-[rgba(255,255,255,0.1)]"
-              >
-                <SkipForward className="h-4 w-4" />
-                Bit Selanjutnya →
-              </button>
-              <button
-                type="button"
-                onClick={goPrevious}
-                className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-[13px] font-medium text-[#E2E8F0] transition-colors hover:bg-[rgba(255,255,255,0.1)]"
-              >
-                <SkipBack className="h-4 w-4" />
-                ← Bit Sebelumnya
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-[13px] font-medium text-[#E2E8F0] transition-colors hover:bg-[rgba(255,255,255,0.1)]"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Reset
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              setSplitVisible((current) => !current);
-              setSelectedHalf((current) => current ?? 'L0');
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] px-4 py-2.5 text-[13px] font-medium text-[#E2E8F0] transition-colors hover:bg-[rgba(255,255,255,0.15)]"
-          >
-            <ArrowRight className="h-4 w-4" />
-            Tampilkan L0 & R0
+            {isPlaying ? 'Pause' : 'Mulai'}
           </button>
         </div>
 
@@ -1018,6 +977,15 @@ function Step3StoryVisual({
     setIsPc2Playing(true);
   };
 
+  const getGridColumnCount = (columns: string) => {
+    const match = columns.match(/grid-cols-(\d+)/);
+    return match ? Number(match[1]) : 8;
+  };
+
+  const compactBitGridStyle = (columns: string, cellMax = 44): CSSProperties => ({
+    gridTemplateColumns: `repeat(${getGridColumnCount(columns)}, minmax(0, ${cellMax}px))`,
+  });
+
   const Bit = ({
     bit,
     selected = true,
@@ -1046,7 +1014,7 @@ function Step3StoryVisual({
         initial={animated ? { y: -10, opacity: 0 } : false}
         animate={animated ? { y: 0, opacity: selected ? 1 : 0.22 } : { opacity: selected ? 1 : 0.22 }}
         transition={{ duration: 0.32, delay: animated && index !== undefined ? Math.min(index * 0.015, 0.35) : 0 }}
-        className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${selected ? toneClass : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#334155]'}`}
+        className={`relative flex aspect-square min-h-[30px] items-center justify-center rounded-[7px] border font-mono text-[15px] font-bold leading-none ${selected ? toneClass : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#334155]'}`}
       >
         {bit}
       </motion.div>
@@ -1078,7 +1046,7 @@ function Step3StoryVisual({
     outputOrderMap?: Map<number, number>;
     enableHover?: boolean;
   }) => (
-    <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
+    <div className="grid justify-center gap-1 sm:gap-1.5" style={compactBitGridStyle(columns)}>
       {bits.split('').map((bit, index) => {
         const position = index + 1 + offset;
         const isParity = parityPositions ? parityPositions.has(position) : false;
@@ -1130,7 +1098,7 @@ function Step3StoryVisual({
     }[tone];
 
     return (
-      <div className={`grid ${columns} gap-1 sm:gap-1.5`}>
+      <div className="grid justify-center gap-1 sm:gap-1.5" style={compactBitGridStyle(columns)}>
         {bits.split('').map((bit, index) => {
           const globalIndex = index + offset;
           const isActive = globalIndex === activeIndex;
@@ -1141,7 +1109,7 @@ function Step3StoryVisual({
               initial={false}
               animate={{ scale: isActive ? 1.14 : 1, opacity: isVisible ? 1 : 0.14 }}
               transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+              className={`relative flex aspect-square min-h-[30px] items-center justify-center rounded-[7px] border font-mono text-[15px] font-bold leading-none ${
                 isActive
                   ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_22px_rgba(37,99,235,0.4)]'
                   : toneClass
@@ -1159,7 +1127,7 @@ function Step3StoryVisual({
     const activeInputPosition = pc2ActiveOutputIndex >= 0 ? pc2Table[pc2ActiveOutputIndex] : null;
 
     return (
-      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+      <div className="grid justify-center gap-1 sm:gap-1.5" style={compactBitGridStyle('grid-cols-7')}>
         {schedule.combined.split('').map((bit, index) => {
           const position = index + 1;
           const selected = pc2Selected.has(position);
@@ -1171,7 +1139,7 @@ function Step3StoryVisual({
               key={`pc2-input-${position}-${bit}`}
               animate={{ scale: isActive ? 1.12 : 1, opacity: selected ? 1 : 0.24 }}
               transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+              className={`relative flex aspect-square min-h-[30px] items-center justify-center rounded-[7px] border font-mono text-[15px] font-bold leading-none ${
                 isActive
                   ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.4)]'
                   : selected
@@ -1189,7 +1157,7 @@ function Step3StoryVisual({
   };
 
   const renderPc2OutputGrid = () => (
-    <div className="grid grid-cols-6 gap-1">
+    <div className="grid justify-center gap-1" style={compactBitGridStyle('grid-cols-6', 46)}>
       {pc2Table.map((position, index) => {
         const bit = pc2PickedBits[index];
         const isActive = index === pc2ActiveOutputIndex;
@@ -1199,7 +1167,7 @@ function Step3StoryVisual({
             key={`pc2-output-${position}-${index}`}
             animate={{ scale: isActive ? 1.1 : 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-            className={`flex min-h-[40px] flex-col items-center justify-center rounded-[7px] border px-1 py-1.5 text-center font-mono ${
+            className={`flex min-h-[42px] flex-col items-center justify-center rounded-[7px] border px-1 py-1.5 text-center font-mono ${
               isActive
                 ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.4)]'
                 : bit === '1'
@@ -1208,10 +1176,10 @@ function Step3StoryVisual({
             }`}
             title={`Bit output ke-${index + 1} = input bit ke-${position}`}
           >
-            <span className={`text-[8px] font-medium leading-none ${isActive ? 'text-white/80' : 'text-[#475569]'}`}>
+            <span className={`text-[9px] font-semibold leading-none ${isActive ? 'text-white/80' : 'text-[#475569]'}`}>
               {index + 1}
             </span>
-            <span className="mt-1 text-[12px] font-semibold leading-none">{bit}</span>
+            <span className="mt-1 text-[16px] font-bold leading-none">{bit}</span>
           </motion.div>
         );
       })}
@@ -1247,7 +1215,7 @@ function Step3StoryVisual({
       stage: 'before' | 'after';
       animated?: boolean;
     }) => (
-      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+      <div className="grid justify-center gap-1 sm:gap-1.5" style={compactBitGridStyle('grid-cols-7')}>
         {bits.split('').map((bit, index) => {
           const isMovedBefore = stage === 'before' && index < schedule.shift;
           const isMovedAtBack = stage === 'after' && index >= bits.length - schedule.shift;
@@ -1260,7 +1228,7 @@ function Step3StoryVisual({
               initial={animated ? { y: 8, opacity: 0 } : false}
               animate={animated ? { y: 0, opacity: 1 } : { opacity: 1 }}
               transition={{ duration: 0.28, delay }}
-              className={`relative flex aspect-square min-h-[24px] items-center justify-center rounded-[7px] border font-mono text-[11px] font-semibold ${
+              className={`relative flex aspect-square min-h-[30px] items-center justify-center rounded-[7px] border font-mono text-[15px] font-bold leading-none ${
                 isMoved
                   ? 'border-[rgba(245,158,11,0.4)] bg-[rgba(245,158,11,0.15)] text-[#FCD34D] shadow-[0_8px_18px_rgba(245,158,11,0.15)]'
                   : `${toneBg} ${toneText}`
@@ -1520,7 +1488,7 @@ function Step3StoryVisual({
           )}
           <motion.div initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-4 rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-4">
             <div className="mb-2 text-[13px] font-semibold text-[#E2E8F0]">Merged 56-bit key</div>
-            <AnimatedBitGrid bits={schedule.combined} columns="grid-cols-7" tone="slate" activeIndex={mergeActiveIndex} />
+            <AnimatedBitGrid bits={schedule.combined} columns="grid-cols-7" tone="blue" activeIndex={mergeActiveIndex} />
           </motion.div>
         </>);
     }
@@ -1558,7 +1526,7 @@ function Step3StoryVisual({
             <div className="rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-3">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#475569]">Tabel referensi</div>
               <div className="mb-2 text-[12px] font-semibold text-[#E2E8F0]">Tabel PC-2 DES</div>
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid justify-center gap-1" style={compactBitGridStyle('grid-cols-6', 46)}>
                 {pc2Table.map((position, index) => {
                   const isActive = index === pc2ActiveOutputIndex;
                   return (
@@ -1571,7 +1539,7 @@ function Step3StoryVisual({
                       }}
                       animate={{ scale: isActive ? 1.08 : 1 }}
                       transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-                      className={`rounded-[7px] border px-1 py-2 text-center font-mono text-[11px] font-semibold transition-colors ${
+                      className={`min-h-[38px] rounded-[7px] border px-1 py-1.5 text-center font-mono text-[14px] font-bold leading-none transition-colors ${
                         isActive
                           ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-[0_10px_24px_rgba(37,99,235,0.4)]'
                           : 'border-[rgba(59,130,246,0.25)] bg-[rgba(37,99,235,0.08)] text-[#60A5FA] hover:bg-[rgba(37,99,235,0.15)]'
@@ -2250,20 +2218,6 @@ function Step5Visual({ details, avalanche, tutorialMode }: { details: DESDetails
               {isFpPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
               {isFpPlaying ? 'Pause' : 'Mulai'}
             </button>
-            <button
-              type="button"
-              onClick={() => { setIsFpPlaying(false); setActiveFpIndex((c) => Math.max(0, c - 1)); }}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-[12px] font-medium text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.1)]"
-            >
-              <SkipBack className="h-3.5 w-3.5" /> Sebelumnya
-            </button>
-            <button
-              type="button"
-              onClick={() => { setIsFpPlaying(false); setActiveFpIndex((c) => Math.min(DES_FINAL_PERMUTATION_TABLE.length - 1, c + 1)); }}
-              className="inline-flex items-center gap-2 rounded-[10px] border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] px-4 py-2.5 text-[12px] font-medium text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.1)]"
-            >
-              Selanjutnya <SkipForward className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
       </div>
@@ -2718,13 +2672,36 @@ export function VisualisasiPage() {
         }
 
         .visualisasi-light [class*="bg-\\[rgba\\(255\\,255\\,255\\,0\\.03\\)\\]"],
-        .visualisasi-light [class*="bg-\\[rgba\\(255\\,255\\,255\\,0\\.04\\)\\]"] {
+        .visualisasi-light [class*="bg-\\[rgba\\(255\\,255\\,255\\,0\\.04\\)\\]"],
+        .visualisasi-light [class*="bg-\\[rgba\\(255\\,255\\,255\\,0\\.06\\)\\]"] {
           background-color: #ffffff !important;
         }
 
+        .visualisasi-light [class*="border-\\[rgba\\(255\\,255\\,255\\,0\\.06\\)\\]"],
         .visualisasi-light [class*="border-\\[rgba\\(255\\,255\\,255\\,0\\.08\\)\\]"],
-        .visualisasi-light [class*="border-\\[rgba\\(255\\,255\\,255\\,0\\.1\\)\\]"] {
+        .visualisasi-light [class*="border-\\[rgba\\(255\\,255\\,255\\,0\\.1\\)\\]"],
+        .visualisasi-light [class*="border-\\[rgba\\(255\\,255\\,255\\,0\\.12\\)\\]"] {
           border-color: #E2E8F0 !important;
+        }
+
+        .visualisasi-light [class*="text-\\[#E2E8F0\\]"] {
+          color: #0F172A !important;
+        }
+
+        .visualisasi-light [class*="text-\\[#94A3B8\\]"] {
+          color: #475569 !important;
+        }
+
+        .visualisasi-light [class*="text-\\[#CBD5E1\\]"] {
+          color: #334155 !important;
+        }
+
+        .visualisasi-light [class*="text-\\[#60A5FA\\]"] {
+          color: #2563EB !important;
+        }
+
+        .visualisasi-light [class*="text-\\[#4ADE80\\]"] {
+          color: #15803D !important;
         }
       `}</style>
       <div
